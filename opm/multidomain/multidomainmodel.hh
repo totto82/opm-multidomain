@@ -50,6 +50,7 @@ SET_TYPE_PROP(MultiDomainBaseModel, Model,
               Opm::MultiDomainBaseModel<TypeTag>);
 SET_TYPE_PROP(MultiDomainBaseModel, Simulator,
               Opm::MultiDomainSimulator<TypeTag>);
+SET_SCALAR_PROP(MultiDomainBaseModel, MaxTimeStepSize, std::numeric_limits<Scalar>::infinity());
 END_PROPERTIES
 
 namespace Opm

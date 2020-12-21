@@ -30,12 +30,9 @@
 
 #include <opm/multidomain/utils/start.hh>
 
-#include <dune/istl/solvers.hh>
-#include <dune/istl/umfpack.hh>
-
 
 int main(int argc, char **argv)
 {
-    typedef TTAG(DupletModel) MixedDimModelTypeTag;
+    typedef TTAG(MultiDimModel) MixedDimModelTypeTag;
     start<MixedDimModelTypeTag>(argc, argv);
 }

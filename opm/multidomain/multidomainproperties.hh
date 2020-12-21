@@ -45,7 +45,7 @@ struct MultiDomainProperties;
 } // namespace Opm
 
 BEGIN_PROPERTIES
-NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ParameterSystem, MultiDomainVanguard));
+NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ImplicitModel, MultiDomainVanguard));
 NEW_PROP_TAG(SubTypeTag);
 NEW_PROP_TAG(CouplerTypeTag);
 NEW_PROP_TAG(DomainI);
@@ -56,6 +56,7 @@ NEW_PROP_TAG(JacobianMatrix);
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(Linearizer);
 NEW_PROP_TAG(Vanguard);
+NEW_PROP_TAG(MaxTimeStepSize);
 
 SET_INT_PROP(MultiDomain, GridGlobalRefinements, 0);
 SET_TYPE_PROP(MultiDomain, Linearizer, Opm::MultiDomainLinearizer< TypeTag >);

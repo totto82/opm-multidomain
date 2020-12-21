@@ -126,6 +126,8 @@ add_custom_target(opm-models_prepare)
 
 # add targets for all tests of the models.
 foreach(tapp fracture_benchmark_2d_1
+             fracture_benchmark_2d_3
+             fracture_benchmark_2d_4
     )
   opm_add_test(${tapp})
 endforeach()

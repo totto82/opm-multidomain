@@ -3,10 +3,10 @@
 #include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include <opm/models/immiscible/immisciblemodel.hh>
 
-#include <opm/models/multiDomain/multidomainmodel.hh>
-#include <opm/models/multiDomain/multidomaincoupler.hh>
-#include <opm/models/multiDomain/matrixconverter.hh>
-#include <opm/models/multiDomain/multidomainproperties.hh>
+#include <opm/multidomain/multidomainmodel.hh>
+#include <opm/multidomain/multidomaincoupler.hh>
+#include <opm/multidomain/matrixconverter.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 
 
 const auto fileDomain2d = "./data/benchmark1_2.txt";
@@ -82,14 +82,14 @@ public:
     typedef Opm::MultiDomainProperties<Domain1dTypeTag, Domain0dTypeTag> type;
 };
 
-NEW_TYPE_TAG(DupletModel, INHERITS_FROM(MultiDomainBaseModel));
+NEW_TYPE_TAG(MultiDimModel, INHERITS_FROM(MultiDomainBaseModel));
 NEW_PROP_TAG(SubTypeTag);
 NEW_PROP_TAG(MortarView);
-SET_TYPE_PROP(DupletModel, MortarView, typename GET_PROP_TYPE(TTAG(Domain1d), Grid)::LeafGridView);
-SET_SCALAR_PROP(DupletModel, EndTime, 1);
-SET_SCALAR_PROP(DupletModel, InitialTimeStepSize, 1);
+SET_TYPE_PROP(MultiDimModel, MortarView, typename GET_PROP_TYPE(TTAG(Domain1d), Grid)::LeafGridView);
+SET_SCALAR_PROP(MultiDimModel, EndTime, 1);
+SET_SCALAR_PROP(MultiDimModel, InitialTimeStepSize, 1);
 NEW_PROP_TAG(CouplerTypeTag);
-SET_PROP(DupletModel, SubTypeTag)
+SET_PROP(MultiDimModel, SubTypeTag)
 {
     typedef TTAG(Domain2d) Domain2dType;
     typedef TTAG(Domain1d) Domain1dType;
@@ -98,7 +98,7 @@ SET_PROP(DupletModel, SubTypeTag)
 public:
     typedef Opm::MultiDomainProperties<Domain2dType, Domain1dType, Domain0dType> type;
 };
-SET_PROP(DupletModel, CouplerTypeTag)
+SET_PROP(MultiDimModel, CouplerTypeTag)
 {
     typedef TTAG(Coupler21) Coupler0;
     typedef TTAG(Coupler10) Coupler1;
