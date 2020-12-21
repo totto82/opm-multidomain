@@ -63,19 +63,14 @@ list (APPEND PROGRAM_SOURCE_FILES
 	)
 
 list (APPEND PUBLIC_HEADER_FILES
-	opm/twophase/blockProblem.hh
-  opm/twophase/logPc.hh
-  opm/twophase/simplifiedVanGenuchten.hh
-  opm/twophase/logPcParams.hh
-  opm/twophase/start.hh
-	opm/twophase/constantPc.hh
-  opm/twophase/oilMigrationProblem.hh
-  opm/twophase/twoDrainsOneBarrierProblem.hh
-	opm/twophase/gravityDominantFlowProblem.hh
-  opm/twophase/oilMigrationUnitProblem.hh
-  opm/twophase/viscousDominantFlowProblem.hh
-	opm/twophase/leftToRightProblem.hh
-  opm/twophase/regularizedLogPc.hh
-	opm/twophase/lensproblem.hh
-  opm/twophase/regularizedLogPcParams.hh
+	opm/multidomain/couplingelementcontext.hh
+	opm/multidomain/dualporositycopuler.hh
+	opm/multidomain/ecfvcouplingstencil.hh
+	opm/multidomain/matrixconverter.hh
+	opm/multidomain/multidomaincoupler.hh
+	opm/multidomain/multidomainlinearizer.hh
+	opm/multidomain/multidomainmapper.hh
+	opm/multidomain/multidomainmodel.hh
+	opm/multidomain/multidomainproperties.hh
+	opm/multidomain/multidomainsimulator.hh
 )

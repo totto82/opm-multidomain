@@ -125,7 +125,7 @@ set(CMAKE_PROJECT_NAME "${PROJECT_NAME}")
 add_custom_target(opm-models_prepare)
 
 # add targets for all tests of the models.
-foreach(tapp 
+foreach(tapp fracture_benchmark_2d_1
     )
   opm_add_test(${tapp})
 endforeach()
