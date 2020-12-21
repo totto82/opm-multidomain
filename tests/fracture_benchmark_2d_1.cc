@@ -28,8 +28,24 @@
 #include "config.h"
 #include "problems/benchmark2dproblem1.hh"
 
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/multidomain/utils/start.hh>
 
+
+const auto FILE_NAME2D = "./data/benchmark1_2.txt";
+const auto FILE_NAME1D = "./data/benchmark1_1.txt";
+const auto FILE_NAME0D = "./data/benchmark1_0.txt";
+
+const auto FILE_NAME_MORTAR1D = "./data/benchmark1_mortar_1.txt";
+const auto FILE_NAME_MORTAR0D = "./data/benchmark1_mortar_0.txt";
+const auto FILE_NAME_MAPPING2D1D = "./data/benchmark1_mapping_1.txt";
+const auto FILE_NAME_MAPPING1D0D = "./data/benchmark1_mapping_0.txt";
+
+BEGIN_PROPERTIES
+NEW_TYPE_TAG(BenchmarkProblem, INHERITS_FROM(ImmiscibleSinglePhaseModel, Benchmark1Problem));
+END_PROPERTIES
+
+#include "benchmark2d.hh"
 
 int main(int argc, char **argv)
 {

@@ -58,11 +58,12 @@ BEGIN_PROPERTIES
 
 NEW_TYPE_TAG(Darcy1PBaseProblem, INHERITS_FROM(MultiDomainVanguard));
 
-NEW_PROP_TAG(Permeability);
 NEW_PROP_TAG(NameSurfix);
+NEW_PROP_TAG(DomainDim);
 
 SET_STRING_PROP(Darcy1PBaseProblem, NameSurfix, "");
 SET_INT_PROP(Darcy1PBaseProblem, WorldDim, 2);
+SET_INT_PROP(Darcy1PBaseProblem, DomainDim, 2);
 
 SET_PROP(Darcy1PBaseProblem, Fluid)
 {
@@ -76,8 +77,6 @@ public:
 SET_TYPE_PROP(Darcy1PBaseProblem, Problem,
               Opm::Darcy1PProblem<TypeTag>);
 
-SET_SCALAR_PROP(Darcy1PBaseProblem, Permeability, 1e-10);
-
 // Dissable gravity
 SET_BOOL_PROP(Darcy1PBaseProblem, EnableGravity, false);
 
@@ -86,9 +85,6 @@ SET_SCALAR_PROP(Darcy1PBaseProblem, EndTime, 1);
 
 // The default for the initial time step size of the simulation
 SET_SCALAR_PROP(Darcy1PBaseProblem, InitialTimeStepSize, 1);
-
-// The default DGF file to load
-SET_STRING_PROP(Darcy1PBaseProblem, GridFile, "./data/groundwater_2d.dgf");
 
 // Use the conjugated gradient linear solver with the default preconditioner (i.e.,
 // ILU-0) from dune-istl
@@ -151,7 +147,7 @@ class Darcy1PProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
         numPhases = FluidSystem::numPhases,
 
         // Grid and world dimension
-        dim = GridView::dimension,
+        dim = GET_PROP_VALUE(TypeTag, DomainDim), 
         dimWorld = GridView::dimensionworld,
 
         // indices of the primary variables
@@ -187,7 +183,16 @@ public:
     void finishInit()
     {
         ParentType::finishInit();
-        intrinsicPerm_ = this->toDimMatrix_(EWOMS_GET_PARAM(TypeTag, Scalar, Permeability));
+        double K;
+        if (dim == 2)
+            K = 1;
+        else if (dim == 1)
+            K = 1e4;
+        else if (dim == 0)
+            K = 1e4;
+        else
+            throw std::logic_error("Unknown dimension");
+        intrinsicPerm_ = this->toDimMatrix_(K);
     }
 
     /*!
@@ -198,9 +203,6 @@ public:
         ParentType::registerParameters();
 
         EWOMS_REGISTER_PARAM(TypeTag, std::string, NameSurfix, "Id to append to grid name");
-        EWOMS_REGISTER_PARAM(TypeTag, Scalar, Permeability,
-                             "The intrinsic permeability [m^2] of the ambient "
-                             "material.");
     }
 
     /*!
