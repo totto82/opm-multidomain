@@ -75,7 +75,7 @@ class Benchmark4Problem : public Opm::Darcy1PProblem<TypeTag>
     {
         numPhases = FluidSystem::numPhases,
         // Grid and world dimension
-        dim = GridView::dimension,
+        dim = GET_PROP_VALUE(TypeTag, DomainDim),
         dimWorld = GridView::dimensionworld,
     };
 

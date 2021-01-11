@@ -128,6 +128,10 @@ add_custom_target(opm-models_prepare)
 foreach(tapp fracture_benchmark_2d_1
              fracture_benchmark_2d_3
              fracture_benchmark_2d_4
+             fracture_benchmark_3d_1
+             fracture_benchmark_3d_2
+             fracture_benchmark_3d_3
+             fracture_benchmark_3d_4
     )
   opm_add_test(${tapp})
 endforeach()

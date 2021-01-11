@@ -101,24 +101,6 @@ END_PROPERTIES
 namespace Opm
 {
 
-class Counter
-{
-public:
-    static std::size_t count()
-    {
-        return count_++;
-    }
-    static std::size_t viewCount()
-    {
-        return count_;
-    }
-
-private:
-    static std::size_t count_;
-};
-
-std::size_t Counter::count_ = 0;
-
 /*!
  * \ingroup TestProblems
  *
@@ -170,8 +152,7 @@ public:
     /*!
      * \copydoc Doxygen::defaultProblemConstructor
      */
-    Darcy1PProblem(Simulator &simulator)
-        : ParentType(simulator), problemIdx_{Counter::count()}
+    Darcy1PProblem(Simulator &simulator) : ParentType(simulator)
     {
         eps_ = 1e-10;
         initiated_ = true;
@@ -388,7 +369,6 @@ protected:
     DimMatrix intrinsicPerm_;
     Scalar eps_;
 
-    const std::size_t problemIdx_;
     bool initiated_;
 };
 
