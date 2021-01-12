@@ -28,8 +28,8 @@
 #ifndef OPM_MULTI_DOMAIN_SIMULATOR
 #define OPM_MULTI_DOMAIN_SIMULATOR
 
-#include <opm/models/multiDomain/multidomainproperties.hh>
 #include <opm/models/utils/basicproperties.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 
 #include <chrono>
 
@@ -40,7 +40,6 @@ class MultiDomainSimulator;
 
 BEGIN_PROPERTIES
 NEW_TYPE_TAG(MultiDomainSimulator, INHERITS_FROM(MultiDomain));
-NEW_PROP_TAG(Simulator);
 
 SET_TYPE_PROP(MultiDomainSimulator, Model,
     Opm::MultiDomainSimulator<TypeTag>);

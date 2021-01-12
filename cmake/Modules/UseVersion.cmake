@@ -14,6 +14,7 @@
 # makes changes to any of the unit tests.
 
 message("-- Writing version information to local header project-version.h")
+string (TIMESTAMP build_timestamp "%Y-%m-%d at %H:%M:%S hrs")
 
 string (TOUPPER "${CMAKE_BUILD_TYPE}" cmake_build_type_upper_)
 if (cmake_build_type_upper_ MATCHES DEBUG)
@@ -25,6 +26,14 @@ if (cmake_build_type_upper_ MATCHES DEBUG)
         "#define PROJECT_VERSION \"${${project}_LABEL} (debug)\"\n"
         "#endif // OPM_GENERATED_OPM_VERSION_HEADER_INCLUDED\n"
 	)
+
+  # Write header file with build timestamp
+  file (WRITE "${PROJECT_BINARY_DIR}/project-timestamp.h"
+      "#ifndef OPM_GENERATED_OPM_TIMESTAMP_HEADER_INCLUDED\n"
+      "#define OPM_GENERATED_OPM_TIMESTAMP_HEADER_INCLUDED\n"
+      "#define BUILD_TIMESTAMP \"${build_timestamp}\"\n"
+      "#endif // OPM_GENERATED_OPM_TIMESTAMP_HEADER_INCLUDED\n"
+      )
 else ()
   if (NOT GIT_FOUND)
 	find_package (Git)
@@ -43,6 +52,13 @@ else ()
               "#define PROJECT_VERSION \"${${project}_LABEL} (unknown git version)\"\n"
               "#endif // OPM_GENERATED_OPM_VERSION_HEADER_INCLUDED\n"
               )
+  # Write header file with build timestamp
+  file (WRITE "${PROJECT_BINARY_DIR}/project-timestamp.h"
+      "#ifndef OPM_GENERATED_OPM_TIMESTAMP_HEADER_INCLUDED\n"
+      "#define OPM_GENERATED_OPM_TIMESTAMP_HEADER_INCLUDED\n"
+      "#define BUILD_TIMESTAMP \"${build_timestamp}\"\n"
+      "#endif // OPM_GENERATED_OPM_TIMESTAMP_HEADER_INCLUDED\n"
+      )
   else ()
 	add_custom_target (update-version ALL
 	  COMMAND ${CMAKE_COMMAND}

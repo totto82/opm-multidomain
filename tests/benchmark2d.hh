@@ -32,13 +32,15 @@
 #include "config.h"
 
 #include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/io/unstructuredgridvanguard.hh>
 #include <opm/multidomain/multidomaincoupler.hh>
 #include <opm/multidomain/multidomainmodel.hh>
+#include <opm/multidomain/multidomainproperties.hh>
+#include <opm/multidomain/multidomainlinearizer.hh>
 
 BEGIN_PROPERTIES
 NEW_TYPE_TAG(Domain2D, INHERITS_FROM(BenchmarkProblem));
-
-SET_TYPE_PROP(Domain2D, Vanguard, Opm::MultiDomainVanguard<TypeTag>);
+SET_TYPE_PROP(Domain2D, Vanguard, Opm::UnstructuredGridVanguard<TypeTag>);
 SET_TAG_PROP(Domain2D, LocalLinearizerSplice, AutoDiffLocalLinearizer);
 // use the element centered finite volume spatial discretization
 SET_INT_PROP(Domain2D, GridDim, 2);
@@ -63,11 +65,12 @@ SET_BOOL_PROP(Domain0D, EnableVtkOutput, false);
 
 // Add the Domain2D Domain1D coupler
 NEW_TYPE_TAG(Coupler21, INHERITS_FROM(DarcyCoupler));
-SET_TYPE_PROP(Coupler21, Vanguard, Opm::MultiDomainVanguard<TypeTag>);
+SET_TYPE_PROP(Coupler21, Vanguard, Opm::UnstructuredGridVanguard<TypeTag>);
 SET_INT_PROP(Coupler21, GridDim, 1);
 SET_INT_PROP(Coupler21, WorldDim, 2);
 SET_STRING_PROP(Coupler21, GridFile, FILE_NAME_MORTAR1D);
 SET_STRING_PROP(Coupler21, MappingFile, FILE_NAME_MAPPING2D1D);
+SET_TYPE_PROP(Coupler21, Grid, GET_PROP_TYPE(TTAG(Domain1D), Grid));
 SET_TYPE_PROP(Coupler21, Scalar, GET_PROP_TYPE(TTAG(Domain2D), Scalar));
 SET_TYPE_PROP(Coupler21, CouplingMapper, Opm::FaceElementMapper<TypeTag>);
 SET_TYPE_PROP(Coupler21, DomainI, Dune::index_constant<0>);
@@ -98,12 +101,10 @@ public:
 };
 
 NEW_TYPE_TAG(MultiDimModel, INHERITS_FROM(MultiDomainBaseModel));
-NEW_PROP_TAG(SubTypeTag);
-NEW_PROP_TAG(MortarView);
+SET_TYPE_PROP(MultiDomain, Linearizer, Opm::MultiDomainLinearizer< TypeTag >);
 SET_TYPE_PROP(MultiDimModel, MortarView, typename GET_PROP_TYPE(TTAG(Domain1D), Grid)::LeafGridView);
 SET_SCALAR_PROP(MultiDimModel, EndTime, 1);
 SET_SCALAR_PROP(MultiDimModel, InitialTimeStepSize, 1);
-NEW_PROP_TAG(CouplerTypeTag);
 SET_PROP(MultiDimModel, SubTypeTag)
 {
     typedef TTAG(Domain2D) Domain2DType;

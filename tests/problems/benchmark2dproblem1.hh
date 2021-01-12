@@ -7,11 +7,6 @@
 #include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include <opm/models/immiscible/immisciblemodel.hh>
 
-#include <opm/multidomain/multidomainmodel.hh>
-#include <opm/multidomain/multidomaincoupler.hh>
-#include <opm/multidomain/matrixconverter.hh>
-#include <opm/multidomain/multidomainproperties.hh>
-
 namespace Opm
 {
 template <class TypeTag>
@@ -19,7 +14,7 @@ class Benchmark1Problem;
 }
 
 BEGIN_PROPERTIES
-NEW_TYPE_TAG(Benchmark1Problem, INHERITS_FROM(ImmiscibleSinglePhaseModel, Darcy1PBaseProblem));
+NEW_TYPE_TAG(Benchmark1Problem, INHERITS_FROM(Darcy1PBaseProblem));
 
 SET_TYPE_PROP(Benchmark1Problem, Problem,
               Opm::Benchmark1Problem<TypeTag>);

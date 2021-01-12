@@ -33,15 +33,12 @@
 
 #include <opm/material/densead/Math.hpp>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/models/multiDomain/couplingelementcontext.hh>
-#include <opm/models/multiDomain/multidomainproperties.hh>
+#include <opm/multidomain/couplingelementcontext.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 
 #include <dune/common/indices.hh>
 #include <dune/grid/common/intersection.hh>
 
-BEGIN_PROPERTIES
-NEW_PROP_TAG(CouplerTypeTag);
-END_PROPERTIES
 
 namespace Opm {
 /*!

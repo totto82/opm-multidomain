@@ -32,8 +32,6 @@
 
 #include "opm/models/utils/propertysystem.hh"
 #include "opm/models/utils/parametersystem.hh"
-#include <opm/models/multiDomain/multidomainlinearizer.hh>
-#include <opm/models/io/multidomainvanguard.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 
@@ -45,22 +43,16 @@ struct MultiDomainProperties;
 } // namespace Opm
 
 BEGIN_PROPERTIES
-NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ImplicitModel, MultiDomainVanguard));
+NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ImplicitModel));
 NEW_PROP_TAG(SubTypeTag);
 NEW_PROP_TAG(CouplerTypeTag);
 NEW_PROP_TAG(DomainI);
 NEW_PROP_TAG(DomainJ);
 NEW_PROP_TAG(Coupler);
-NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(JacobianMatrix);
-NEW_PROP_TAG(SolutionVector);
-NEW_PROP_TAG(Linearizer);
-NEW_PROP_TAG(Vanguard);
-NEW_PROP_TAG(MaxTimeStepSize);
 
-SET_INT_PROP(MultiDomain, GridGlobalRefinements, 0);
-SET_TYPE_PROP(MultiDomain, Linearizer, Opm::MultiDomainLinearizer< TypeTag >);
-SET_TYPE_PROP(MultiDomain, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
+// SET_INT_PROP(MultiDomain, GridGlobalRefinements, 0);
+// SET_TYPE_PROP(MultiDomain, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
 
 END_PROPERTIES
 

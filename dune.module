@@ -3,7 +3,7 @@
 # and by the CMake build scripts.
 ####################################################################
 Module: opm-multidomain
-Version: 2019.10-pre
+Version: 2020.10
 Codename: Honey Bunny
 Description: Implements coupling between multiple domains
 Url: http://opm-project.org

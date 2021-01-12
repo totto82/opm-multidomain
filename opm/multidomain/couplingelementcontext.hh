@@ -31,7 +31,8 @@
 #include <opm/models/utils/alignedallocator.hh>
 #include <opm/models/discretization/common/fvbaseelementcontext.hh>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/models/multiDomain/ecfvcouplingstencil.hh>
+#include <opm/multidomain/ecfvcouplingstencil.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 
 #include <opm/material/common/Exceptions.hpp>
 
@@ -41,10 +42,8 @@
 
 BEGIN_PROPERTIES
 NEW_PROP_TAG(CouplingMapper);
-NEW_PROP_TAG(SubTypeTag);
 NEW_PROP_TAG(CouplingElementContext);
 NEW_PROP_TAG(MortarView);
-
 END_PROPERTIES
 
 namespace Opm
@@ -66,12 +65,13 @@ class CouplingElementContext // : public FvBaseElementContext<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) CouplingMapper;
     typedef typename GET_PROP_TYPE(TypeTag, Stencil) Stencil;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) MortarView;
+    using SubTypes = typename GET_PROP_TYPE(TypeTag, SubTypeTag);
     template <std::size_t i>
-    using Simulator = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template Simulator<i>;
+    using Simulator = typename SubTypes::template Simulator<i>;
     template <std::size_t i>
-    using ElementContext = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template ElementContext<i>;
+    using ElementContext = typename SubTypes::template ElementContext<i>;
     template <std::size_t i>
-    using IntensiveQuantities = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template IntensiveQuantities<i>;
+    using IntensiveQuantities = typename SubTypes::template IntensiveQuantities<i>;
 
 
     static const unsigned dimWorld = MortarView::dimensionworld;

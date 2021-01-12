@@ -56,6 +56,9 @@ macro (opm_compile_satellites opm satellite excl_all test_regexp)
 
   # compile each of these separately
   foreach (_sat_FILE IN LISTS ${satellite}_SOURCES)
+    if (NOT "${test_regexp}" STREQUAL "" AND NOT Boost_UNIT_TEST_FRAMEWORK_FOUND)
+        continue()
+    endif()
     get_filename_component (_sat_NAME "${_sat_FILE}" NAME_WE)
     add_executable (${_sat_NAME} ${excl_all} ${_sat_FILE})
     add_dependencies (${satellite} ${_sat_NAME})
@@ -195,6 +198,7 @@ endmacro (opm_data satellite target dirname files)
 #       TEST_DEPENDS       Other tests which must be run before running this test (optional, default: None)
 #       LIBRARIES          Libraries to link test against (optional)
 #       WORKING_DIRECTORY  Working directory for test (optional, default: ${PROJECT_BINARY_DIR})
+#       CONFIGURATION      Configuration to add test to
 #
 # Example:
 #
@@ -208,7 +212,7 @@ include(CMakeParseArguments)
 macro(opm_add_test TestName)
   cmake_parse_arguments(CURTEST
                         "NO_COMPILE;ONLY_COMPILE;ALWAYS_ENABLE" # flags
-                        "EXE_NAME;PROCESSORS;WORKING_DIRECTORY" # one value args
+                        "EXE_NAME;PROCESSORS;WORKING_DIRECTORY;CONFIGURATION" # one value args
                         "CONDITION;DEFAULT_ENABLE_IF;TEST_DEPENDS;DRIVER;DRIVER_ARGS;DEPENDS;TEST_ARGS;SOURCES;LIBRARIES" # multi-value args
                         ${ARGN})
 
@@ -344,7 +348,8 @@ macro(opm_add_test TestName)
 
       add_test(NAME ${_FANCY}
                WORKING_DIRECTORY "${CURTEST_WORKING_DIRECTORY}"
-               COMMAND ${CURTEST_COMMAND})
+               COMMAND ${CURTEST_COMMAND}
+               CONFIGURATIONS ${CURTEST_CONFIGURATION})
 
       # specify the dependencies between the tests
       if (CURTEST_TEST_DEPENDS)

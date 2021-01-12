@@ -30,6 +30,11 @@ if(NOT @opm-project_NAME@_FOUND)
   set (@opm-project_NAME@_LINKER_FLAGS "@opm-project_LINKER_FLAGS@")
   set (@opm-project_NAME@_CONFIG_VARS "@opm-project_CONFIG_VARS@")
 
+  # The flag whether embedded Python is supported or not is passed to downstream modules,
+  # it is only used to enable/disable regression testing with Python enabled input. The
+  # actual code is self contained - and can be used downstream without awareness of this.
+  set (@opm-project_NAME@_EMBEDDED_PYTHON @OPM_ENABLE_EMBEDDED_PYTHON@)
+
   # libraries come from the build tree where this file was generated
   set (@opm-project_NAME@_LIBRARY "@opm-project_LIBRARY@")
   set (@opm-project_NAME@_LIBRARIES ${@opm-project_NAME@_LIBRARY} "@opm-project_LIBRARIES@")
@@ -68,12 +73,6 @@ if(NOT @opm-project_NAME@_FOUND)
       include("${_dir}/@opm-project_NAME@-targets.cmake")
     endif()
   endif (NOT "@opm-project_TARGET@" STREQUAL "")
-
-  # ensure that we build with support for C++11 to preserve ABI
-  string (REPLACE "@CXX_STD0X_FLAGS@" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  string (REPLACE "@CXX_STDLIB_FLAGS@" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  string (STRIP "${CMAKE_CXX_FLAGS}" CMAKE_CXX_FLAGS)
-  set (CMAKE_CXX_FLAGS "@CXX_STD0X_FLAGS@@CXX_SPACE@@CXX_STDLIB_FLAGS@ ${CMAKE_CXX_FLAGS}")
 
   # same as above, but for C99
   string (REPLACE "@C_STD99_FLAGS@" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")

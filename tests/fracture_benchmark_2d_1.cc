@@ -42,7 +42,7 @@ const auto FILE_NAME_MAPPING2D1D = "./data/benchmark1_mapping_1.txt";
 const auto FILE_NAME_MAPPING1D0D = "./data/benchmark1_mapping_0.txt";
 
 BEGIN_PROPERTIES
-NEW_TYPE_TAG(BenchmarkProblem, INHERITS_FROM(ImmiscibleSinglePhaseModel, Benchmark1Problem));
+NEW_TYPE_TAG(BenchmarkProblem, INHERITS_FROM(Benchmark1Problem));
 END_PROPERTIES
 
 #include "benchmark2d.hh"

@@ -29,8 +29,8 @@
 #define OPM_Multi_DOMAIN_MODEL
 
 #include <opm/models/utils/basicproperties.hh>
-#include <opm/models/multiDomain/multidomainproperties.hh>
-#include <opm/models/multiDomain/multidomainsimulator.hh>
+#include <opm/multidomain/multidomainproperties.hh>
+#include <opm/multidomain/multidomainsimulator.hh>
 
 #include <chrono>
 
@@ -42,9 +42,6 @@ class MultiDomainBaseModel;
 
 BEGIN_PROPERTIES
 NEW_TYPE_TAG(MultiDomainBaseModel, INHERITS_FROM(MultiDomain));
-NEW_PROP_TAG(Model);
-NEW_PROP_TAG(CouplerTypeTag);
-NEW_PROP_TAG(Simulator);
 
 SET_TYPE_PROP(MultiDomainBaseModel, Model,
               Opm::MultiDomainBaseModel<TypeTag>);

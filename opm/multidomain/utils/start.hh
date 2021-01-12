@@ -2,9 +2,9 @@
 #define MULTIDOMAIN_START_HH
 
 #include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/models/multiDomain/matrixconverter.hh>
-#include <opm/models/multiDomain/multidomainmodel.hh>
-#include <opm/models/multiDomain/multidomainproperties.hh>
+#include <opm/multidomain/matrixconverter.hh>
+#include <opm/multidomain/multidomainmodel.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 #include <opm/models/utils/basicproperties.hh>
 #include <opm/models/utils/propertysystem.hh>
 

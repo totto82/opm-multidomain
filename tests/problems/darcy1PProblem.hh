@@ -29,17 +29,14 @@
 #ifndef OPM_DARCY_1_P_PROBLEM_HH
 #define OPM_DARCY_1_P_PROBLEM_HH
 
-#include <opm/models/immiscible/immiscibleproperties.hh>
-#include <opm/models/io/multidomainvanguard.hh>
-#include <opm/simulators/linalg/parallelistlbackend.hh>
 
+#include "opm/grid/polyhedralgrid.hh"
 #include <opm/material/components/Unit.hpp>
 #include <opm/material/fluidstates/ImmiscibleFluidState.hpp>
 #include <opm/material/fluidsystems/LiquidPhase.hpp>
 #include <opm/material/common/Unused.hpp>
-
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/simulators/linalg/parallelistlbackend.hh>
 
 #include <dune/common/version.hh>
 #include <dune/common/fmatrix.hh>
@@ -56,10 +53,12 @@ class Darcy1PProblem;
 
 BEGIN_PROPERTIES
 
-NEW_TYPE_TAG(Darcy1PBaseProblem, INHERITS_FROM(MultiDomainVanguard));
+NEW_TYPE_TAG(Darcy1PBaseProblem, INHERITS_FROM(ImmiscibleSinglePhaseModel));
 
 NEW_PROP_TAG(NameSurfix);
 NEW_PROP_TAG(DomainDim);
+NEW_PROP_TAG(WorldDim);
+NEW_PROP_TAG(GridDim);
 
 SET_STRING_PROP(Darcy1PBaseProblem, NameSurfix, "");
 SET_INT_PROP(Darcy1PBaseProblem, WorldDim, 2);
@@ -76,6 +75,9 @@ public:
 
 SET_TYPE_PROP(Darcy1PBaseProblem, Problem,
               Opm::Darcy1PProblem<TypeTag>);
+
+// Define grid type
+SET_TYPE_PROP(Darcy1PBaseProblem, Grid, Dune::PolyhedralGrid<GET_PROP_VALUE(TypeTag, GridDim), GET_PROP_VALUE(TypeTag, WorldDim)>);
 
 // Dissable gravity
 SET_BOOL_PROP(Darcy1PBaseProblem, EnableGravity, false);

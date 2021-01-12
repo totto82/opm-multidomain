@@ -19,8 +19,7 @@ find_opm_package (
   # TODO: we should probe for all the HAVE_* values listed below;
   # however, we don't actually use them in our implementation, so
   # we just include them to forward here in case anyone else does
-  "CXX11Features REQUIRED;
-  dune-common REQUIRED
+  "dune-common REQUIRED
   "
   # header to search for
   "dune/geometry/quadraturerules.hh"
@@ -34,8 +33,7 @@ find_opm_package (
   # test program
 "#include <dune/geometry/quadraturerules.hh>
 int main (void) {
-  Dune::GeometryType gt;
-  gt.makeQuadrilateral();
+  Dune::GeometryType gt = Dune::GeometryTypes::quadrilateral;
   Dune::QuadratureRules<double, 2>::rule(gt, 2).size();
   return 0;
 }

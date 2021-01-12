@@ -33,10 +33,10 @@
 
 #include <opm/material/densead/Math.hpp>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/models/multiDomain/couplingelementcontext.hh>
-#include <opm/models/multiDomain/ecfvcouplingstencil.hh>
-#include <opm/models/multiDomain/multidomainmapper.hh>
-#include <opm/models/multiDomain/multidomainproperties.hh>
+#include <opm/multidomain/couplingelementcontext.hh>
+#include <opm/multidomain/ecfvcouplingstencil.hh>
+#include <opm/multidomain/multidomainmapper.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 
 #include <dune/common/indices.hh>
 
@@ -49,15 +49,7 @@ class DarcyCoupler;
 
 BEGIN_PROPERTIES
 NEW_TYPE_TAG(DarcyCoupler, INHERITS_FROM(MultiDomain));
-NEW_PROP_TAG(Coupler);
-NEW_PROP_TAG(GridFile);
 NEW_PROP_TAG(MappingFile);
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(CouplingMapper);
-NEW_PROP_TAG(SubTypeTag);
-NEW_PROP_TAG(CouplingElementContext);
-NEW_PROP_TAG(DomainI);
-NEW_PROP_TAG(DomainJ);
 
 SET_TYPE_PROP(DarcyCoupler, Coupler, Opm::DarcyCoupler<TypeTag>);
 SET_TYPE_PROP(DarcyCoupler, CouplingMapper, Opm::FaceElementMapper<TypeTag>);
