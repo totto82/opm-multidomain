@@ -13,13 +13,17 @@ template <class TypeTag>
 class Benchmark1Problem;
 }
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(Benchmark1Problem, INHERITS_FROM(Darcy1PBaseProblem));
+namespace Opm::Properties {
 
-SET_TYPE_PROP(Benchmark1Problem, Problem,
-              Opm::Benchmark1Problem<TypeTag>);
+// Create new type tags
+namespace TTag {
+struct Benchmark1Problem { using InheritsFrom = std::tuple<Darcy1PBaseProblem>; };
+} // end namespace TTag
 
-END_PROPERTIES
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Benchmark1Problem> { using type = Opm::Benchmark1Problem<TypeTag>; };
+} // end namespace Opm::Properties
+
 
 namespace Opm
 {

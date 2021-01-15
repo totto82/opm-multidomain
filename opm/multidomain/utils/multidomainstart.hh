@@ -11,8 +11,10 @@
 #include <dune/istl/io.hh>
 #include <dune/istl/solvers.hh>
 
+namespace Opm{
+
 template <class ProblemTypeTag>
-void start(int argc, char** argv)
+void multidomainStart(int argc, char** argv)
 {
     try {
         // Maybe initialize MPI
@@ -23,19 +25,18 @@ void start(int argc, char** argv)
         std::cerr << "Unknown exception thrown!" << std::endl;
     }
 
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, Simulator) Simulator;
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, SubTypeTag) SubTypes;
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, CouplerTypeTag) CouplerTypes;
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, Model) Model;
-    //typedef typename GET_PROP_TYPE(ProblemTypeTag, LinearSolverBackend) LinearSolverBackend;
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, SubTypeTag)::JacobianMatrix JacobianMatrix;
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, SubTypeTag)::GlobalEqVector GlobalEqVector;
-    typedef typename GET_PROP_TYPE(ProblemTypeTag, SubTypeTag)::GlobalSolutionVector BlockSolutionVector;
+    using Simulator = GetPropType<ProblemTypeTag, Properties::Simulator>;
+    using SubTypes = GetPropType<ProblemTypeTag, Properties::SubTypeTag>;
+    using CouplerTypes = GetPropType<ProblemTypeTag, Properties::CouplerTypeTag>;
+    using Model = GetPropType<ProblemTypeTag, Properties::Model>;
+    using JacobianMatrix = typename GetPropType<ProblemTypeTag, Properties::SubTypeTag>::JacobianMatrix;
+    using GlobalEqVector = typename GetPropType<ProblemTypeTag, Properties::SubTypeTag>::GlobalEqVector;
+    using BlockSolutionVector = typename GetPropType<ProblemTypeTag, Properties::SubTypeTag>::GlobalSolutionVector;
 
-    using MatrixBlock = typename GET_PROP_TYPE(typename SubTypes::template TypeTag<0>, SparseMatrixAdapter)::MatrixBlock::BaseType; //typename Dune::FieldMatrix<double, 2, 2>;
-    using BCRSMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-    using VectorBlock = typename Dune::FieldVector<double, MatrixBlock::rows>;
-    using SolutionVector = typename Dune::BlockVector<VectorBlock>;
+    using MatrixBlock = typename GetPropType<typename SubTypes::template TypeTag<0>, Properties::SparseMatrixAdapter>::MatrixBlock::BaseType; //typename Dune::FieldMatrix<double, 2, 2>;
+    using BCRSMatrix = Dune::BCRSMatrix<MatrixBlock>;
+    using VectorBlock = Dune::FieldVector<double, MatrixBlock::rows>;
+    using SolutionVector = Dune::BlockVector<VectorBlock>;
 
     // Register all parameters
     Simulator::registerParameters();
@@ -45,9 +46,9 @@ void start(int argc, char** argv)
     forEach(integralRange(numDomains), [&](const auto typeI) {
         EWOMS_END_PARAM_REGISTRATION(typename SubTypes::template TypeTag<typeI>);
     });
-    Dune::index_constant<CouplerTypes::numSubCouplers> numCoupers;
+    Dune::index_constant<CouplerTypes::numSubCouplers> numCouplers;
     using namespace Dune::Hybrid;
-    forEach(integralRange(numCoupers), [&](const auto typeI) {
+    forEach(integralRange(numCouplers), [&](const auto typeI) {
         EWOMS_END_PARAM_REGISTRATION(typename CouplerTypes::template TypeTag<typeI>);
     });
     EWOMS_END_PARAM_REGISTRATION(ProblemTypeTag);
@@ -57,9 +58,9 @@ void start(int argc, char** argv)
     auto& model = simulator.model();
     // Start time loop
     double time = 0;
-    auto endTime = GET_PROP_VALUE(ProblemTypeTag, EndTime);
-    auto dt = GET_PROP_VALUE(ProblemTypeTag, InitialTimeStepSize);
-    auto maxDt = GET_PROP_VALUE(ProblemTypeTag, MaxTimeStepSize);
+    auto endTime = getPropValue<ProblemTypeTag, Properties::EndTime>();
+    auto dt = getPropValue<ProblemTypeTag, Properties::InitialTimeStepSize>();
+    auto maxDt = getPropValue<ProblemTypeTag, Properties::MaxTimeStepSize>();
     unsigned timeIdx = -1;
     simulator.setTimeStepSize(dt);
     simulator.setTime(-dt, timeIdx);
@@ -131,14 +132,13 @@ void start(int argc, char** argv)
             SolutionVector solutionUpdate(blockRes.size());
             SolutionVector residual(blockRes);
 
-            typedef typename Dune::MatrixAdapter<BCRSMatrix, SolutionVector, SolutionVector> LinearOperator;
-            typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMatrix, Dune::Amg::FrobeniusNorm>>
-                CoarsenCriterion;
+            using LinearOperator = Dune::MatrixAdapter<BCRSMatrix, SolutionVector, SolutionVector>;
+            using CoarsenCriterion = typename Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMatrix, Dune::Amg::FrobeniusNorm>>;
             ///typedef typename Dune::Amg::SymmetricCriterion<BCRSMatrix, Dune::Amg::FrobeniusNorm> CCC;
             using ILU0 = Dune::SeqILU0<BCRSMatrix, SolutionVector, SolutionVector>;
             using SOR = Dune::SeqSOR<BCRSMatrix, SolutionVector, SolutionVector>;
             using AMG = typename Dune::Amg::AMG<LinearOperator, SolutionVector, SOR>;
-            typedef typename Dune::Amg::SmootherTraits<SOR>::Arguments SmootherArgs;
+            using SmootherArgs = typename Dune::Amg::SmootherTraits<SOR>::Arguments;
 
             Dune::InverseOperatorResult statistics;
             CoarsenCriterion coarsenCriterion(/*maxLevel=*/15, 5000);
@@ -257,4 +257,6 @@ void start(int argc, char** argv)
               << "   Solve: " << solverTimeTot / 1000.0 << " s\n";
 }
 
-#endif
+} // end namespace Opm
+
+#endif // MULTIDOMAIN_START_HH

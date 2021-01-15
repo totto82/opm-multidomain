@@ -54,22 +54,26 @@ namespace Opm {
 */
 template <class TypeTag>
 class MultiDomainLinearizer {
-    using Simulator = typename GET_PROP_TYPE(TypeTag, Simulator);
+    // Get properties for the multidomain problem
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
+    using JacobianMatrix = typename GetPropType<TypeTag, Properties::SubTypeTag>::JacobianMatrix;
+    using GlobalEqVector = typename GetPropType<TypeTag, Properties::SubTypeTag>::GlobalEqVector;
+    
+    // Get properties from the subdomains and couplers
     template <std::size_t i>
-    using Coupler = typename GET_PROP_TYPE(TypeTag, CouplerTypeTag)::template Coupler<i>;
+    using Coupler = typename GetPropType<TypeTag, Properties::CouplerTypeTag>::template Coupler<i>;
     template <std::size_t i>
-    using SubSimulator = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template Simulator<i>;
+    using SubSimulator = typename GetPropType<TypeTag, Properties::SubTypeTag>::template Simulator<i>;
     template <std::size_t i>
-    using Stencil = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template Stencil<i>;
+    using Stencil = typename GetPropType<TypeTag, Properties::SubTypeTag>::template Stencil<i>;
     template <std::size_t i>
-    using GridView = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template GridView<i>;
-    typedef typename GET_PROP_TYPE(TypeTag, SubTypeTag)::JacobianMatrix JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, SubTypeTag)::GlobalEqVector GlobalEqVector;
-
+    using GridView = typename GetPropType<TypeTag, Properties::SubTypeTag>::template GridView<i>;
     template <std::size_t i>
     using Element = typename GridView<i>::template Codim<0>::Entity;
-    using Simulators = typename GET_PROP_TYPE(TypeTag, SubTypeTag)::template TupleOfSharedPtr<SubSimulator>;
-    using Couplers = typename GET_PROP_TYPE(TypeTag, CouplerTypeTag)::template TupleOfSharedPtr<Coupler>;
+
+    // Combine the simulators and couplers in a tuple for convenience
+    using Simulators = typename GetPropType<TypeTag, Properties::SubTypeTag>::template TupleOfSharedPtr<SubSimulator>;
+    using Couplers = typename GetPropType<TypeTag, Properties::CouplerTypeTag>::template TupleOfSharedPtr<Coupler>;
 
 public:
     MultiDomainLinearizer()

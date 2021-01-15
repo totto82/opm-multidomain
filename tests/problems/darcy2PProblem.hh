@@ -28,107 +28,164 @@
 #ifndef EWOMS_DARCY_2p_PROBLEM_HH
 #define EWOMS_DARCY_2p_PROBLEM_HH
 
-#include <opm/models/immiscible/immiscibleproperties.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
-#include <opm/models/io/multidomainvanguard.hh>
-
+#include <dune/grid/yaspgrid.hh>
+#include <opm/grid/polyhedralgrid.hh>
 #include <opm/material/components/Unit.hpp>
-#include <opm/material/fluidmatrixinteractions/LinearMaterial.hpp>
 #include <opm/material/fluidmatrixinteractions/EffToAbsLaw.hpp>
+#include <opm/material/fluidmatrixinteractions/LinearMaterial.hpp>
 #include <opm/material/fluidmatrixinteractions/MaterialTraits.hpp>
 #include <opm/material/fluidsystems/TwoPhaseImmiscibleFluidSystem.hpp>
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/models/immiscible/immiscibleproperties.hh>
+#include <opm/models/io/unstructuredgridvanguard.hh>
 
-#include <dune/grid/yaspgrid.hh>
-
-namespace Opm
-{
+namespace Opm {
 template <class TypeTag>
 class Darcy2pProblem;
 }
 
-BEGIN_PROPERTIES
+namespace Opm::Properties {
+// Create new type tags
+namespace TTag {
+struct Darcy2pBaseProblem {
+    using InheritsFrom = std::tuple<ImmiscibleTwoPhaseModel, ImplicitModel>;
+};
+}  // end namespace TTag
 
-NEW_TYPE_TAG(Darcy2pBaseProblem, INHERITS_FROM(MultiDomainVanguard));
+template <class TypeTag, class MyTypeTag>
+struct NameSurfix {
+    using type = UndefinedProperty;
+};
 
-NEW_PROP_TAG(NameSurfix);
-NEW_PROP_TAG(DomainDim);
+template <class TypeTag, class MyTypeTag>
+struct DomainDim {
+    using type = UndefinedProperty;
+};
 
-// Set the problem property
-SET_TYPE_PROP(Darcy2pBaseProblem, Problem, Opm::Darcy2pProblem<TypeTag>);
+template <class TypeTag, class MyTypeTag>
+struct WorldDim {
+    using type = UndefinedProperty;
+};
+
+template <class TypeTag, class MyTypeTag>
+struct GridDim {
+    using type = UndefinedProperty;
+};
+
+template <class TypeTag>
+struct NameSurfix<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr auto value = "";
+};
+
+template <class TypeTag>
+struct WorldDim<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr int value = 3;
+};
+
+template <class TypeTag>
+struct DomainDim<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr int value = 3;
+};
 
 // Set the wetting phase
-SET_PROP(Darcy2pBaseProblem, WettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+template <class TypeTag>
+struct WettingPhase<TypeTag, TTag::Darcy2pBaseProblem> {
+   private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-public:
+   public:
     typedef Opm::LiquidPhase<Scalar, Opm::Unit<Scalar>> type;
 };
 
 // Set the non-wetting phase
-SET_PROP(Darcy2pBaseProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+template <class TypeTag>
+struct NonwettingPhase<TypeTag, TTag::Darcy2pBaseProblem> {
+   private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-public:
+   public:
     typedef Opm::LiquidPhase<Scalar, Opm::Unit<Scalar>> type;
 };
 
-// Set the material Law
-SET_PROP(Darcy2pBaseProblem, MaterialLaw)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    enum
-    {
-        wettingPhaseIdx = FluidSystem::wettingPhaseIdx
-    };
-    enum
-    {
-        nonWettingPhaseIdx = FluidSystem::nonWettingPhaseIdx
-    };
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Opm::TwoPhaseMaterialTraits<Scalar,
-                                        /*wettingPhaseIdx=*/FluidSystem::wettingPhaseIdx,
-                                        /*nonWettingPhaseIdx=*/FluidSystem::nonWettingPhaseIdx>
-        Traits;
+template <class TypeTag>
+struct MaterialLaw<TypeTag, TTag::Darcy2pBaseProblem> {
+   private:
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    enum { wettingPhaseIdx = FluidSystem::wettingPhaseIdx };
+    enum { nonWettingPhaseIdx = FluidSystem::nonWettingPhaseIdx };
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Traits = Opm::TwoPhaseMaterialTraits<
+        Scalar,
+        /*wettingPhaseIdx=*/FluidSystem::wettingPhaseIdx,
+        /*nonWettingPhaseIdx=*/FluidSystem::nonWettingPhaseIdx>;
+        // define the material law which is parameterized by effective
+        // saturations
+    using EffectiveLaw = Opm::LinearMaterial<Traits>;
 
-    // define the material law which is parameterized by effective
-    // saturations
-    typedef Opm::LinearMaterial<Traits> EffectiveLaw;
-
-public:
+   public:
     // define the material law parameterized by absolute saturations
-    typedef Opm::EffToAbsLaw<EffectiveLaw> type;
+    using type = Opm::EffToAbsLaw<EffectiveLaw>;
 };
 
-// Dissable gravity
-SET_BOOL_PROP(Darcy2pBaseProblem, EnableGravity, false);
+template <class TypeTag>
+struct Problem<TypeTag, TTag::Darcy2pBaseProblem> {
+    using type = Opm::Darcy2pProblem<TypeTag>;
+};
 
-// The default for the initial time step size of the simulation. This might be overridden
-// in a multidomain simulation.
-SET_SCALAR_PROP(Darcy2pBaseProblem, InitialTimeStepSize, 0.01);
+template <class TypeTag>
+struct Grid<TypeTag, TTag::Darcy2pBaseProblem> {
+   private:
+    enum { gridDim = getPropValue<TypeTag, Properties::GridDim>() };
+    enum { worldDim = getPropValue<TypeTag, Properties::WorldDim>() };
 
-// By default, include the intrinsic permeability tensor to the VTK output files
-SET_BOOL_PROP(Darcy2pBaseProblem, VtkWriteIntrinsicPermeabilities, true);
+   public:
+    using type = Dune::PolyhedralGrid<gridDim, worldDim>;
+};
 
-// enable the storage cache by default for this problem
-SET_BOOL_PROP(Darcy2pBaseProblem, EnableStorageCache, true);
+template <class TypeTag>
+struct EnableGravity<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr bool value = false;
+};
 
-// enable the cache for intensive quantities by default for this problem
-SET_BOOL_PROP(Darcy2pBaseProblem, EnableIntensiveQuantityCache, true);
+template <class TypeTag>
+struct EndTime<TypeTag, TTag::Darcy2pBaseProblem> {
+    using type = GetPropType<TypeTag, Scalar>;
+    static constexpr type value = 1;
+};
 
+template <class TypeTag>
+struct InitialTimeStepSize<TypeTag, TTag::Darcy2pBaseProblem> {
+    using type = GetPropType<TypeTag, Scalar>;
+    static constexpr type value = 0.01;
+};
 
-SET_STRING_PROP(Darcy2pBaseProblem, NameSurfix, "");
-SET_INT_PROP(Darcy2pBaseProblem, WorldDim, 3);
-SET_INT_PROP(Darcy2pBaseProblem, DomainDim, 3);
+template <class TypeTag>
+struct EnableStorageCache<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr bool value = true;
+};
 
-END_PROPERTIES
+template <class TypeTag>
+struct EnableIntensiveQuantityCache<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr bool value = true;
+};
 
-namespace Opm
-{
+template <class TypeTag>
+struct VtkWriteSaturations<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr bool value = true;
+};
+template <class TypeTag>
+struct VtkWriteMobilities<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr bool value = true;
+};
+template <class TypeTag>
+struct VtkWriteRelativePermeabilities<TypeTag, TTag::Darcy2pBaseProblem> {
+    static constexpr bool value = true;
+};
+
+}  // end namespace Opm::Properties
+
+namespace Opm {
 
 /*!
  * \ingroup TestProblems
@@ -136,22 +193,20 @@ namespace Opm
  * \brief An incompressible two phase problem.
  */
 template <class TypeTag>
-class Darcy2pProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, BaseProblem) ParentType;
+class Darcy2pProblem : public GetPropType<TypeTag, Properties::BaseProblem> {
+    using ParentType = GetPropType<TypeTag, Properties::BaseProblem>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Simulator) Simulator;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Indices = GetPropType<TypeTag, Properties::Indices>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using WettingPhase = GetPropType<TypeTag, Properties::WettingPhase>;
+    using NonwettingPhase = GetPropType<TypeTag, Properties::NonwettingPhase>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
+    using Model = GetPropType<TypeTag, Properties::Model>;
 
-    enum
-    {
+    enum {
         // number of phases
         numPhases = FluidSystem::numPhases,
 
@@ -163,42 +218,36 @@ class Darcy2pProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
         contiNEqIdx = Indices::conti0EqIdx + nonWettingPhaseIdx,
 
         // Grid and world dimension
-        dim = GridView::dimension,
+        dim = getPropValue<TypeTag, Properties::DomainDim>(),
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, EqVector) EqVector;
-    typedef typename GET_PROP_TYPE(TypeTag, RateVector) RateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryRateVector) BoundaryRateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    using EqVector = GetPropType<TypeTag, Properties::EqVector>;
+    using RateVector = GetPropType<TypeTag, Properties::RateVector>;
+    using BoundaryRateVector = GetPropType<TypeTag, Properties::BoundaryRateVector>;
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
+    using MaterialLawParams = GetPropType<TypeTag, Properties::MaterialLawParams>;
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
-
-public:
+   public:
     /*!
      * \copydoc Doxygen::defaultProblemConstructor
      */
-    Darcy2pProblem(Simulator &simulator)
-        : ParentType(simulator)
-    {
-        initiated_ = true;
-    }
+    Darcy2pProblem(Simulator &simulator) : ParentType(simulator) { initiated_ = true; }
 
     /*!
      * \copydoc FvBaseProblem::finishInit
      */
-    void finishInit()
-    {
+    void finishInit() {
         ParentType::finishInit();
 
         eps_ = 3e-6;
         FluidSystem::init();
 
-        temperature_ = 273.15 + 20; // -> 20°C
+        temperature_ = 273.15 + 20;  // -> 20°C
 
         // residual saturations
         materialParams_.setResidualSaturation(wettingPhaseIdx, 0.0);
@@ -208,8 +257,7 @@ public:
 
         K_ = this->toDimMatrix_(1.0);
 
-        if (dimWorld == 3)
-        {
+        if (dimWorld == 3) {
             this->gravity_ = 0;
             this->gravity_[1] = 9.8;
         }
@@ -218,34 +266,25 @@ public:
     /*!
      * \copydoc FvBaseMultiPhaseProblem::registerParameters
      */
-    static void registerParameters()
-    {
-        ParentType::registerParameters();
-    }
-    bool recycleFirstIterationStorage() const
-    {
-        return false;
-    }
+    static void registerParameters() { ParentType::registerParameters(); }
+    bool recycleFirstIterationStorage() const { return false; }
     /*!
      * \copydoc FvBaseProblem::briefDescription
      */
-    static std::string briefDescription()
-    {
+    static std::string briefDescription() {
         std::string thermal = "isothermal";
-        bool enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy);
-        if (enableEnergy)
-            thermal = "non-isothermal";
+        bool enableEnergy = getPropValue<TypeTag, Properties::EnableEnergy>();
+        if (enableEnergy) thermal = "non-isothermal";
 
         std::string disc = "vertex centered finite volume";
-        typedef typename GET_PROP_TYPE(TypeTag, Discretization) D;
+        using D = GetPropType<TypeTag, Properties::Discretization>;
         bool useEcfv = std::is_same<D, Opm::EcfvDiscretization<TypeTag>>::value;
-        if (useEcfv)
-            disc = "element centered finite volume";
+        if (useEcfv) disc = "element centered finite volume";
 
         return std::string("") +
                "Ground remediation problem where a dense oil infiltrates " +
-               "an aquifer. " +
-               "This is the binary for the " + thermal + " variant using the" + disc + " discretization";
+               "an aquifer. " + "This is the binary for the " + thermal +
+               " variant using the" + disc + " discretization";
     }
 
     /*!
@@ -258,8 +297,7 @@ public:
      */
     template <class Context>
     const DimMatrix &intrinsicPermeability(const Context &context, unsigned spaceIdx,
-                                           unsigned timeIdx) const
-    {
+                                           unsigned timeIdx) const {
         return K_;
     }
 
@@ -267,10 +305,8 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::porosity
      */
     template <class Context>
-    Scalar porosity(const Context &context OPM_UNUSED,
-                    unsigned spaceIdx OPM_UNUSED,
-                    unsigned timeIdx OPM_UNUSED) const
-    {
+    Scalar porosity(const Context &context OPM_UNUSED, unsigned spaceIdx OPM_UNUSED,
+                    unsigned timeIdx OPM_UNUSED) const {
         return 1.0;
     }
 
@@ -278,9 +314,8 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::materialLawParams
      */
     template <class Context>
-    const MaterialLawParams &materialLawParams(const Context &context,
-                                               unsigned spaceIdx, unsigned timeIdx) const
-    {
+    const MaterialLawParams &materialLawParams(const Context &context, unsigned spaceIdx,
+                                               unsigned timeIdx) const {
         return materialParams_;
     }
 
@@ -288,10 +323,8 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::temperature
      */
     template <class Context>
-    Scalar temperature(const Context &context OPM_UNUSED,
-                       unsigned spaceIdx OPM_UNUSED,
-                       unsigned timeIdx OPM_UNUSED) const
-    {
+    Scalar temperature(const Context &context OPM_UNUSED, unsigned spaceIdx OPM_UNUSED,
+                       unsigned timeIdx OPM_UNUSED) const {
         return temperature_;
     }
 
@@ -305,32 +338,26 @@ public:
     /*!
      * \copydoc FvBaseProblem::name
      */
-    std::string name() const
-    {
+    std::string name() const {
         std::ostringstream oss;
-        oss << "darcy2PProblem_" << GET_PROP_VALUE(TypeTag, NameSurfix);
+        oss << "darcy2PProblem_" << getPropValue<TypeTag, Properties::NameSurfix>();
         return oss.str();
     }
 
     /*!
      * \copydoc FvBaseProblem::beginTimeStep
      */
-    void beginTimeStep()
-    {
-    }
+    void beginTimeStep() {}
 
     /*!
      * \copydoc FvBaseProblem::beginIteration
      */
-    void beginIteration()
-    {
-    }
+    void beginIteration() {}
 
     /*!
      * \copydoc FvBaseProblem::endTimeStep
      */
-    void endTimeStep()
-    {
+    void endTimeStep() {
 #ifndef NDEBUG
         this->model().checkConservativeness();
 
@@ -339,12 +366,10 @@ public:
         this->model().globalStorage(storage);
 
         // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0)
-        {
-            std::cout << "Storage: " << storage << std::endl
-                      << std::flush;
+        if (this->gridView().comm().rank() == 0) {
+            std::cout << "Storage: " << storage << std::endl << std::flush;
         }
-#endif // NDEBUG
+#endif  // NDEBUG
     }
 
     //! \}
@@ -358,38 +383,34 @@ public:
      * \copydoc FvBaseProblem::boundary
      */
     template <class Context>
-    void boundary(BoundaryRateVector &values,
-                  const Context &context,
-                  unsigned spaceIdx,
-                  unsigned timeIdx) const
-    {
+    void boundary(BoundaryRateVector &values, const Context &context, unsigned spaceIdx,
+                  unsigned timeIdx) const {
         const GlobalPosition &pos = context.pos(spaceIdx, timeIdx);
 
-        if (onLeftBoundary_(pos) || onRightBoundary_(pos))
-        {
+        if (onLeftBoundary_(pos) || onRightBoundary_(pos)) {
             // free flow boundary. we assume incompressible fluids
             Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/Scalar(1));
-            Scalar densityN = NonwettingPhase::density(temperature_, /*pressure=*/Scalar(1));
+            Scalar densityN =
+                NonwettingPhase::density(temperature_, /*pressure=*/Scalar(1));
 
             Scalar T = temperature(context, spaceIdx, timeIdx);
             Scalar pw, Sw;
 
             // set wetting phase pressure and saturation
-            if (onLeftBoundary_(pos))
-            {
+            if (onLeftBoundary_(pos)) {
                 // hydrostatic pressure + 1
                 pw = 700.0;
                 Sw = 0.0;
             }
-            else
-            {
+            else {
                 // hydrostatic pressure
                 pw = 0.0;
                 Sw = 1.0;
             }
 
             // specify a full fluid state using pw and Sw
-            const MaterialLawParams &matParams = this->materialLawParams(context, spaceIdx, timeIdx);
+            const MaterialLawParams &matParams =
+                this->materialLawParams(context, spaceIdx, timeIdx);
 
             Opm::ImmiscibleFluidState<Scalar, FluidSystem,
                                       /*storeEnthalpy=*/false>
@@ -401,19 +422,22 @@ public:
             Scalar pC[numPhases];
             MaterialLaw::capillaryPressures(pC, matParams, fs);
             fs.setPressure(wettingPhaseIdx, pw);
-            fs.setPressure(nonWettingPhaseIdx, pw + pC[nonWettingPhaseIdx] - pC[wettingPhaseIdx]);
+            fs.setPressure(nonWettingPhaseIdx,
+                           pw + pC[nonWettingPhaseIdx] - pC[wettingPhaseIdx]);
 
             fs.setDensity(wettingPhaseIdx, densityW);
             fs.setDensity(nonWettingPhaseIdx, densityN);
 
-            fs.setViscosity(wettingPhaseIdx, WettingPhase::viscosity(temperature_, /*pressure=*/Scalar(1e5)));
-            fs.setViscosity(nonWettingPhaseIdx, NonwettingPhase::viscosity(temperature_, /*pressure=*/Scalar(1e5)));
+            fs.setViscosity(wettingPhaseIdx, WettingPhase::viscosity(
+                                                 temperature_, /*pressure=*/Scalar(1e5)));
+            fs.setViscosity(
+                nonWettingPhaseIdx,
+                NonwettingPhase::viscosity(temperature_, /*pressure=*/Scalar(1e5)));
 
             // impose an freeflow boundary condition
             values.setFreeFlow(context, spaceIdx, timeIdx, fs);
         }
-        else
-        {
+        else {
             // no flow boundary
             values.setNoFlow();
         }
@@ -430,8 +454,8 @@ public:
      * \copydoc FvBaseProblem::initial
      */
     template <class Context>
-    void initial(PrimaryVariables &values, const Context &context, unsigned spaceIdx, unsigned timeIdx) const
-    {
+    void initial(PrimaryVariables &values, const Context &context, unsigned spaceIdx,
+                 unsigned timeIdx) const {
         const GlobalPosition &pos = context.pos(spaceIdx, timeIdx);
 
         Scalar pw = 700 * (1 - 1.0 / 700 * pos[0]);
@@ -449,13 +473,15 @@ public:
         paramCache.updatePhase(fs, wettingPhaseIdx);
 
         // calculate the capillary pressure
-        const MaterialLawParams &matParams = this->materialLawParams(context, spaceIdx, timeIdx);
+        const MaterialLawParams &matParams =
+            this->materialLawParams(context, spaceIdx, timeIdx);
         Scalar pC[numPhases];
         MaterialLaw::capillaryPressures(pC, matParams, fs);
 
         // make a full fluid state
         fs.setPressure(wettingPhaseIdx, pw);
-        fs.setPressure(nonWettingPhaseIdx, pw + (pC[wettingPhaseIdx] - pC[nonWettingPhaseIdx]));
+        fs.setPressure(nonWettingPhaseIdx,
+                       pw + (pC[wettingPhaseIdx] - pC[nonWettingPhaseIdx]));
 
         // assign the primary variables
         values.assignNaive(fs);
@@ -468,11 +494,8 @@ public:
      * everywhere.
      */
     template <class Context>
-    void source(RateVector &rate,
-                const Context &context OPM_UNUSED,
-                unsigned spaceIdx OPM_UNUSED,
-                unsigned timeIdx OPM_UNUSED) const
-    {
+    void source(RateVector &rate, const Context &context OPM_UNUSED,
+                unsigned spaceIdx OPM_UNUSED, unsigned timeIdx OPM_UNUSED) const {
         rate = Scalar(0.0);
     }
 
@@ -480,32 +503,23 @@ public:
     template <class Context>
     Scalar extrusionFactor(const Context &context OPM_UNUSED,
                            unsigned spaceIdx OPM_UNUSED,
-                           unsigned timeIdx OPM_UNUSED) const
-    {
+                           unsigned timeIdx OPM_UNUSED) const {
         if (dim == dimWorld - 1)
-            return 1e-4; // fracture apperture
+            return 1e-4;  // fracture apperture
         else
             return 1.0;
     }
 
-private:
-    bool onLeftBoundary_(const GlobalPosition &pos) const
-    {
-        return pos[0] < 0 + eps_;
-    }
+   private:
+    bool onLeftBoundary_(const GlobalPosition &pos) const { return pos[0] < 0 + eps_; }
 
-    bool onRightBoundary_(const GlobalPosition &pos) const
-    {
-        return pos[0] > 1 - eps_;
-    }
+    bool onRightBoundary_(const GlobalPosition &pos) const { return pos[0] > 1 - eps_; }
 
-    bool onLowerBoundary_(const GlobalPosition &pos) const
-    {
+    bool onLowerBoundary_(const GlobalPosition &pos) const {
         return pos[1] < this->boundingBoxMin()[1] + eps_;
     }
 
-    bool onUpperBoundary_(const GlobalPosition &pos) const
-    {
+    bool onUpperBoundary_(const GlobalPosition &pos) const {
         return pos[1] > this->boundingBoxMax()[1] - eps_;
     }
 
@@ -517,6 +531,6 @@ private:
     bool initiated_{false};
 };
 
-} // namespace Opm
+}  // namespace Opm
 
 #endif

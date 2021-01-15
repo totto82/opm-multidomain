@@ -36,16 +36,22 @@ template <class TypeTag>
 class Benchmark3Problem;
 }
 
-BEGIN_PROPERTIES
+namespace Opm::Properties {
+// Create new type tags
+namespace TTag {
+struct Benchmark3Problem { using InheritsFrom = std::tuple<Darcy1PBaseProblem>; };
+} // end namespace TTag
 
-NEW_TYPE_TAG(Benchmark3Problem, INHERITS_FROM(Darcy1PBaseProblem));
-NEW_PROP_TAG(LeftRight);
-SET_BOOL_PROP(Benchmark3Problem, LeftRight, 1);
+template<class TypeTag, class MyTypeTag>
+struct LeftRight { using type = UndefinedProperty; };
 
-SET_TYPE_PROP(Benchmark3Problem, Problem,
-              Opm::Benchmark3Problem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Benchmark3Problem> { using type = Opm::Benchmark3Problem<TypeTag>; };
 
-END_PROPERTIES
+template<class TypeTag>
+struct LeftRight<TypeTag, TTag::Benchmark3Problem> { static constexpr bool value = true; };
+} // end namespace Opm::Properties
+
 
 namespace Opm
 {
@@ -65,13 +71,13 @@ namespace Opm
 template <class TypeTag>
 class Benchmark3Problem : public Opm::Darcy1PProblem<TypeTag>
 {
-    typedef Opm::Darcy1PProblem<TypeTag> ParentType;
+    using ParentType = Opm::Darcy1PProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, RateVector) RateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryRateVector) BoundaryRateVector;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using RateVector = GetPropType<TypeTag, Properties::RateVector>;
+    using BoundaryRateVector = GetPropType<TypeTag, Properties::BoundaryRateVector>;
 
     enum
     {
@@ -81,12 +87,12 @@ class Benchmark3Problem : public Opm::Darcy1PProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
+    // Inherit headers
     using ParentType::ParentType;
 
     /*!
@@ -174,16 +180,16 @@ public:
     {
         std::string leftRight;
 
-        if (GET_PROP_VALUE(TypeTag, LeftRight))
+        if (getPropValue<TypeTag, Properties::LeftRight>())
             leftRight = "left_to_right_";
         else
             leftRight = "top_to_bottom_";
         return "benchmark3_" + leftRight + ParentType::name();
     }
 
-    static void registerParameters()
+    static void registerProperties()
     {
-        ParentType::registerParameters();
+        ParentType::registerProperties();
 
         EWOMS_REGISTER_PARAM(TypeTag, bool, LeftRight,
                              "Flow from left -> right if true. Else, top -> bottom");
@@ -192,14 +198,14 @@ public:
 protected:
     bool onDirichletBoundary_(GlobalPosition pos) const
     {
-        if (GET_PROP_VALUE(TypeTag, LeftRight))
+        if (getPropValue<TypeTag, Properties::LeftRight>())
             return this->onLeftBoundary_(pos) || this->onRightBoundary_(pos);
         else
             return this->onBottomBoundary_(pos) || this->onTopBoundary_(pos);
     }
     bool onInjectionBoundary_(GlobalPosition pos) const
     {
-        if (GET_PROP_VALUE(TypeTag, LeftRight))
+        if (getPropValue<TypeTag, Properties::LeftRight>())
             return this->onLeftBoundary_(pos);
         else
             return this->onTopBoundary_(pos);

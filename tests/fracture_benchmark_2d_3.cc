@@ -25,31 +25,44 @@
  *
  * \brief Test for the immisicible VCVF discretization with only a single phase
  */
+#include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/multidomain/utils/multidomainstart.hh>
+
 #include "config.h"
 #include "problems/benchmark2dproblem3.hh"
 
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/multidomain/utils/start.hh>
+constexpr auto FILE_NAME3D = "";
+constexpr auto FILE_NAME2D = "./data/benchmark3_2.txt";
+constexpr auto FILE_NAME1D = "./data/benchmark3_1.txt";
+constexpr auto FILE_NAME0D = "./data/benchmark3_0.txt";
+
+constexpr auto FILE_NAME_MORTAR2D = "";
+constexpr auto FILE_NAME_MORTAR1D = "./data/benchmark3_mortar_1.txt";
+constexpr auto FILE_NAME_MORTAR0D = "./data/benchmark3_mortar_0.txt";
+constexpr auto FILE_NAME_MAPPING3D2D = "";
+constexpr auto FILE_NAME_MAPPING2D1D = "./data/benchmark3_mapping_1.txt";
+constexpr auto FILE_NAME_MAPPING1D0D = "./data/benchmark3_mapping_0.txt";
 
 
-const auto FILE_NAME2D = "./data/benchmark3_2.txt";
-const auto FILE_NAME1D = "./data/benchmark3_1.txt";
-const auto FILE_NAME0D = "./data/benchmark3_0.txt";
+// Create new type tags
+namespace Opm::Properties {
 
-const auto FILE_NAME_MORTAR1D = "./data/benchmark3_mortar_1.txt";
-const auto FILE_NAME_MORTAR0D = "./data/benchmark3_mortar_0.txt";
-const auto FILE_NAME_MAPPING2D1D = "./data/benchmark3_mapping_1.txt";
-const auto FILE_NAME_MAPPING1D0D = "./data/benchmark3_mapping_0.txt";
+namespace TTag {
+struct BenchmarkProblem {
+    using InheritsFrom = std::tuple<Benchmark3Problem>;
+};
+}  // end namespace TTag
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(BenchmarkProblem, INHERITS_FROM(ImmiscibleSinglePhaseModel, Benchmark3Problem));
-SET_BOOL_PROP(BenchmarkProblem, LeftRight, 1);
-END_PROPERTIES
+template <class TypeTag>
+struct LeftRight<TypeTag, TTag::BenchmarkProblem> {
+    static constexpr bool value = true;
+};
+
+}  // end namespace Opm::Properties
 
 #include "benchmark2d.hh"
 
-int main(int argc, char **argv)
-{
-    typedef TTAG(MultiDimModel) MixedDimModelTypeTag;
-    start<MixedDimModelTypeTag>(argc, argv);
+int main(int argc, char **argv) {
+    using MixedDimModelTypeTag = Opm::Properties::TTag::MultiDimModel;
+    Opm::multidomainStart<MixedDimModelTypeTag>(argc, argv);
 }

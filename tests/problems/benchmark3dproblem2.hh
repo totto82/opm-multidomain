@@ -36,18 +36,22 @@ template <class TypeTag>
 class Benchmark3d2Problem;
 }
 
-BEGIN_PROPERTIES
+namespace Opm::Properties {
+// Create new type tags
+namespace TTag {
+struct Benchmark3d2Problem { using InheritsFrom = std::tuple<Darcy2pBaseProblem>; };
+} // end namespace TTag
 
-NEW_TYPE_TAG(Benchmark3d2Problem, INHERITS_FROM(Darcy2pBaseProblem));
-NEW_PROP_TAG(BlockingFractures);
+template<class TypeTag, class MyTypeTag>
+struct BlockingFractures { using type = UndefinedProperty; };
 
-SET_INT_PROP(Benchmark3d2Problem, WorldDim, 3);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Benchmark3d2Problem> { using type = Opm::Benchmark3d2Problem<TypeTag>; };
 
-SET_TYPE_PROP(Benchmark3d2Problem, Grid, Dune::PolyhedralGrid<GET_PROP_VALUE(TypeTag, GridDim), GET_PROP_VALUE(TypeTag, WorldDim)>);
-SET_TYPE_PROP(Benchmark3d2Problem, Problem,
-              Opm::Benchmark3d2Problem<TypeTag>);
+template<class TypeTag>
+struct WorldDim<TypeTag, TTag::Benchmark3d2Problem> { static constexpr int value = 3; };
 
-END_PROPERTIES
+} // end namespace Opm::Properties
 
 namespace Opm
 {
@@ -67,18 +71,18 @@ namespace Opm
 template <class TypeTag>
 class Benchmark3d2Problem : public Opm::Darcy2pProblem<TypeTag>
 {
-    typedef Opm::Darcy2pProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryRateVector) BoundaryRateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, RateVector) RateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+    using ParentType = Opm::Darcy2pProblem<TypeTag>;
+
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = GetPropType<TypeTag, Properties::Indices>;
+    using BoundaryRateVector = GetPropType<TypeTag, Properties::BoundaryRateVector>;
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
+    using MaterialLawParams = GetPropType<TypeTag, Properties::MaterialLawParams>;
+    using WettingPhase = GetPropType<TypeTag, Properties::WettingPhase>;
+    using NonwettingPhase = GetPropType<TypeTag, Properties::NonwettingPhase>;
 
     enum
     {
@@ -93,14 +97,13 @@ class Benchmark3d2Problem : public Opm::Darcy2pProblem<TypeTag>
         contiNEqIdx = Indices::conti0EqIdx + wettingPhaseIdx,
 
         // Grid and world dimension
-        dim = GET_PROP_VALUE(TypeTag, DomainDim),
+        dim = getPropValue<TypeTag, Properties::DomainDim>(),
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     using ParentType::ParentType;
@@ -120,7 +123,7 @@ public:
         double Kl = 0.1;
         double Kf;
 
-        if (GET_PROP_VALUE(TypeTag, BlockingFractures))
+        if (getPropValue<TypeTag, Properties::BlockingFractures>())
             Kf = 1e-4;
         else
             Kf = 1e4;
@@ -229,8 +232,7 @@ public:
         }
         else if (onInjectionBoundary_(globalPos))
         {
-            RateVector massRate(0.0);
-            massRate = 0.0;
+            BoundaryRateVector massRate(0.0);
             massRate[contiNEqIdx] = -1.0; // kg / (m^2 * s)
             // impose a forced flow boundary
             values.setMassRate(massRate);

@@ -29,6 +29,7 @@
 #define EWOMS_COUPLING_ELEMENT_CONTEXT_HH
 
 #include <opm/models/utils/alignedallocator.hh>
+#include <opm/models/utils/propertysystem.hh>
 #include <opm/models/discretization/common/fvbaseelementcontext.hh>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
 #include <opm/multidomain/ecfvcouplingstencil.hh>
@@ -40,11 +41,7 @@
 
 #include <vector>
 
-BEGIN_PROPERTIES
-NEW_PROP_TAG(CouplingMapper);
-NEW_PROP_TAG(CouplingElementContext);
-NEW_PROP_TAG(MortarView);
-END_PROPERTIES
+
 
 namespace Opm
 {
@@ -59,13 +56,13 @@ namespace Opm
 template <class TypeTag>
 class CouplingElementContext // : public FvBaseElementContext<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingElementContext) Implementation;
+    using Implementation = GetPropType<TypeTag, Properties::CouplingElementContext>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using CouplingMapper = GetPropType<TypeTag, Properties::CouplingMapper>;
+    using Stencil = GetPropType<TypeTag, Properties::Stencil>;
+    using MortarView = GetPropType<TypeTag, Properties::MortarView>;
+    using SubTypes = GetPropType<TypeTag, Properties::SubTypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) CouplingMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, Stencil) Stencil;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) MortarView;
-    using SubTypes = typename GET_PROP_TYPE(TypeTag, SubTypeTag);
     template <std::size_t i>
     using Simulator = typename SubTypes::template Simulator<i>;
     template <std::size_t i>
@@ -73,13 +70,12 @@ class CouplingElementContext // : public FvBaseElementContext<TypeTag>
     template <std::size_t i>
     using IntensiveQuantities = typename SubTypes::template IntensiveQuantities<i>;
 
-
     static const unsigned dimWorld = MortarView::dimensionworld;
-    static const unsigned numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static const unsigned numEq = getPropValue<TypeTag, Properties::NumEq>();
 
     enum
     {
-        timeDiscHistorySize = GET_PROP_VALUE(TypeTag, TimeDiscHistorySize)
+        timeDiscHistorySize = getPropValue<TypeTag, Properties::TimeDiscHistorySize>()
     };
 
     typedef typename MortarView::template Codim<0>::Entity Element;

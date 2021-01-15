@@ -29,53 +29,69 @@
 #include "problems/benchmark3dproblem1.hh"
 
 #include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/multidomain/utils/start.hh>
+#include <opm/multidomain/utils/multidomainstart.hh>
 
 
-const auto FILE_NAME3D = "./data/benchmark_3d_case_1_3.txt";
-const auto FILE_NAME2D = "./data/benchmark_3d_case_1_2.txt";
-const auto FILE_NAME1D = "";
-const auto FILE_NAME0D = "";
+constexpr auto FILE_NAME3D = "./data/benchmark_3d_case_1_3.txt";
+constexpr auto FILE_NAME2D = "./data/benchmark_3d_case_1_2.txt";
+constexpr auto FILE_NAME1D = "";
+constexpr auto FILE_NAME0D = "";
 
-const auto FILE_NAME_MORTAR2D = "./data/benchmark_3d_case_1_mortar_2.txt";
-const auto FILE_NAME_MORTAR1D = "";
-const auto FILE_NAME_MORTAR0D = "";
+constexpr auto FILE_NAME_MORTAR2D = "./data/benchmark_3d_case_1_mortar_2.txt";
+constexpr auto FILE_NAME_MORTAR1D = "";
+constexpr auto FILE_NAME_MORTAR0D = "";
 
-const auto FILE_NAME_MAPPING3D2D = "./data/benchmark_3d_case_1_mapping_2.txt";
-const auto FILE_NAME_MAPPING2D1D = "";
-const auto FILE_NAME_MAPPING1D0D = "";
+constexpr auto FILE_NAME_MAPPING3D2D = "./data/benchmark_3d_case_1_mapping_2.txt";
+constexpr auto FILE_NAME_MAPPING2D1D = "";
+constexpr auto FILE_NAME_MAPPING1D0D = "";
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(BenchmarkProblem, INHERITS_FROM(ImmiscibleTwoPhaseModel, Benchmark3d1Problem));
-END_PROPERTIES
+// Create new type tags
+namespace Opm::Properties {
+
+namespace TTag {
+struct BenchmarkProblem {
+    using InheritsFrom = std::tuple<Benchmark3d1Problem>;
+};
+}  // end namespace TTag
+}  // end namespace Opm::Properties
 
 #include "benchmark3d.hh"
 
-BEGIN_PROPERTIES
-SET_SCALAR_PROP(MultiDimModel, EndTime, 1e9 /* 31.7 years*/);
-SET_SCALAR_PROP(MultiDimModel, InitialTimeStepSize, 1e9 / 100);
-SET_PROP(MultiDimModel, SubTypeTag)
-{
-    typedef TTAG(Domain3d) Domain0Type;
-    typedef TTAG(Domain2d) Domain1Type;
-
-public:
-    typedef Opm::MultiDomainProperties<Domain0Type, Domain1Type> type;
+// Define problem specific properties
+namespace Opm::Properties {
+// Set end time of problem
+template<class TypeTag>
+struct EndTime<TypeTag, TTag::MultiDimModel>{
+    using type = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr type value = 1e9;
 };
 
-SET_PROP(MultiDimModel, CouplerTypeTag)
-{
-    typedef TTAG(Coupler32) Coupler0;
-
-public:
-    typedef Opm::MultiCouplerProperties<Coupler0> type;
+// Set time step size of problem
+template<class TypeTag>
+struct InitialTimeStepSize<TypeTag, TTag::MultiDimModel>{
+    using type = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr type value = 1e9 / 100.0;
 };
 
-END_PROPERTIES
+// Set active domains of problem
+template<class TypeTag>
+struct SubTypeTag<TypeTag, TTag::MultiDimModel>
+{
+    using type = Opm::MultiDomainProperties<TTag::Domain3D, TTag::Domain2D>;
+};
+
+// Set active couplers of problem
+template<class TypeTag>
+struct CouplerTypeTag<TypeTag, TTag::MultiDimModel>
+{
+    using type = Opm::MultiCouplerProperties<TTag::Coupler32>;
+};
+
+}  // end namespace Opm::Properties
 
 
 int main(int argc, char **argv)
 {
     typedef TTAG(MultiDimModel) MixedDimModelTypeTag;
-    start<MixedDimModelTypeTag>(argc, argv);
+    Opm::multidomainStart<MixedDimModelTypeTag>(argc, argv);
 }

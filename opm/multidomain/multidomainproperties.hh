@@ -42,19 +42,41 @@ struct MultiDomainProperties;
 
 } // namespace Opm
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(MultiDomain, INHERITS_FROM(ImplicitModel));
-NEW_PROP_TAG(SubTypeTag);
-NEW_PROP_TAG(CouplerTypeTag);
-NEW_PROP_TAG(DomainI);
-NEW_PROP_TAG(DomainJ);
-NEW_PROP_TAG(Coupler);
-NEW_PROP_TAG(JacobianMatrix);
+namespace Opm::Properties {
+namespace TTag{
+struct MultiDomain { using InheritsFrom = std::tuple<ImplicitModel>; };
+} // end namespace TTag
 
-// SET_INT_PROP(MultiDomain, GridGlobalRefinements, 0);
-// SET_TYPE_PROP(MultiDomain, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
+template<class TypeTag, class MyTypeTag>
+struct SubTypeTag { using type = UndefinedProperty; };
 
-END_PROPERTIES
+template<class TypeTag, class MyTypeTag>
+struct CouplerTypeTag { using type = UndefinedProperty; };
+
+template<class TypeTag, class MyTypeTag>
+struct DomainI { using type = UndefinedProperty; };
+
+template<class TypeTag, class MyTypeTag>
+struct DomainJ { using type = UndefinedProperty; };
+
+template<class TypeTag, class MyTypeTag>
+struct Coupler { using type = UndefinedProperty; };
+
+template<class TypeTag, class MyTypeTag>
+struct JacobianMatrix { using type = UndefinedProperty; };
+
+//! The type of the domain mapper
+template<class TypeTag, class MyTypeTag>
+struct CouplingMapper { using type = UndefinedProperty; };
+
+//! The type of element context of the copuling
+template<class TypeTag, class MyTypeTag>
+struct CouplingElementContext { using type = UndefinedProperty; };
+
+//! The mortar view type of the mortar grid
+template<class TypeTag, class MyTypeTag>
+struct MortarView { using type = UndefinedProperty; };
+} // end namespace Opm::Properties
 
 
 namespace Opm
@@ -182,18 +204,18 @@ private:
 
     //! the scalar type of each sub domain
     template <std::size_t id>
-    using SubDomainScalar = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Scalar);
+    using SubDomainScalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
 
     //! the solution type of each sub domain
     template <std::size_t id>
-    using SubDomainSolutionVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, SolutionVector);
+    using SubDomainSolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
     //! the solution type of each sub domain
     template <std::size_t id>
-    using SubDomainGlobalEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GlobalEqVector);
+    using SubDomainGlobalEqVector = GetPropType<SubDomainTypeTag<id>, Properties::GlobalEqVector>;
 
     //! the jacobian type of each sub domain
     template <std::size_t id>
-    using SubDomainJacobianMatrix = typename GET_PROP_TYPE(SubDomainTypeTag<id>, SparseMatrixAdapter)::IstlMatrix;
+    using SubDomainJacobianMatrix = typename GetPropType<SubDomainTypeTag<id>, Properties::SparseMatrixAdapter>::IstlMatrix;
 
 public:
     /*
@@ -203,29 +225,29 @@ public:
     template <std::size_t id>
     using TypeTag = SubDomainTypeTag<id>;
     template <std::size_t id>
-    using Simulator = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Simulator);
+    using Simulator = GetPropType<SubDomainTypeTag<id>, Properties::Simulator>;
     template <std::size_t id>
-    using Model = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Model);
+    using Model = GetPropType<SubDomainTypeTag<id>, Properties::Model>;
     template <std::size_t id>
-    using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
+    using GridView = GetPropType<SubDomainTypeTag<id>, Properties::GridView>;
     template <std::size_t id>
-    using ElementContext = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementContext);
+    using ElementContext = GetPropType<SubDomainTypeTag<id>, Properties::ElementContext>;
     template <std::size_t id>
-    using MaterialLaw = typename GET_PROP_TYPE(SubDomainTypeTag<id>, MaterialLaw);
+    using MaterialLaw = GetPropType<SubDomainTypeTag<id>, Properties::MaterialLaw>;
     template <std::size_t id>
-    using Stencil = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Stencil);
+    using Stencil = GetPropType<SubDomainTypeTag<id>, Properties::Stencil>;
     template <std::size_t id>
-    using IntensiveQuantities = typename GET_PROP_TYPE(SubDomainTypeTag<id>, IntensiveQuantities);
+    using IntensiveQuantities = GetPropType<SubDomainTypeTag<id>, Properties::IntensiveQuantities>;
 
     template <std::size_t id>
     struct SubDomain
     {
         using Index = Dune::index_constant<id>;
         using TypeTag = SubDomainTypeTag<id>;
-        using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
-        using Model = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Model);
+        using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+        using Model = GetPropType<SubDomainTypeTag<id>, Properties::Model>;
 
-        using SolutionVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, SolutionVector);
+        using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
     };
 
     //\}
@@ -288,11 +310,11 @@ public:
     template <std::size_t id>
     struct SubDomain
     {
-        using IndexI = typename GET_PROP_TYPE(SubCouplerTypeTag<id>, DomainI);
-        using IndexJ = typename GET_PROP_TYPE(SubCouplerTypeTag<id>, DomainJ);
+        using IndexI = GetPropType<SubCouplerTypeTag<id>, Properties::DomainI>;
+        using IndexJ = GetPropType<SubCouplerTypeTag<id>, Properties::DomainJ>;
     };
     template <std::size_t id>
-    using Coupler = typename GET_PROP_TYPE(SubCouplerTypeTag<id>, Coupler);
+    using Coupler = GetPropType<SubCouplerTypeTag<id>, Properties::Coupler>;
 
     template <std::size_t id>
     using TypeTag = SubCouplerTypeTag<id>;

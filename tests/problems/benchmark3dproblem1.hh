@@ -35,18 +35,22 @@ namespace Opm
 template <class TypeTag>
 class Benchmark3d1Problem;
 }
+namespace Opm::Properties {
+// Create new type tags
+namespace TTag {
+struct Benchmark3d1Problem { using InheritsFrom = std::tuple<Darcy2pBaseProblem>; };
+} // end namespace TTag
 
-BEGIN_PROPERTIES
+template<class TypeTag, class MyTypeTag>
+struct LeftRight { using type = UndefinedProperty; };
 
-NEW_TYPE_TAG(Benchmark3d1Problem, INHERITS_FROM(Darcy2pBaseProblem));
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Benchmark3d1Problem> { using type = Opm::Benchmark3d1Problem<TypeTag>; };
 
-SET_INT_PROP(Benchmark3d1Problem, WorldDim, 3);
+template<class TypeTag>
+struct WorldDim<TypeTag, TTag::Benchmark3d1Problem> { static constexpr int value = 3; };
+} // end namespace Opm::Properties
 
-SET_TYPE_PROP(Benchmark3d1Problem, Grid, Dune::PolyhedralGrid<GET_PROP_VALUE(TypeTag, GridDim), GET_PROP_VALUE(TypeTag, WorldDim)>);
-SET_TYPE_PROP(Benchmark3d1Problem, Problem,
-              Opm::Benchmark3d1Problem<TypeTag>);
-
-END_PROPERTIES
 
 namespace Opm
 {
@@ -66,17 +70,16 @@ namespace Opm
 template <class TypeTag>
 class Benchmark3d1Problem : public Opm::Darcy2pProblem<TypeTag>
 {
-    typedef Opm::Darcy2pProblem<TypeTag> ParentType;
+    using ParentType = Opm::Darcy2pProblem<TypeTag>;
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryRateVector) BoundaryRateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using BoundaryRateVector = GetPropType<TypeTag, Properties::BoundaryRateVector>;
+    using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
+    using MaterialLawParams = GetPropType<TypeTag, Properties::MaterialLawParams>;
+    using WettingPhase = GetPropType<TypeTag, Properties::WettingPhase>;
+    using NonwettingPhase = GetPropType<TypeTag, Properties::NonwettingPhase>;
 
     enum
     {
@@ -88,14 +91,14 @@ class Benchmark3d1Problem : public Opm::Darcy2pProblem<TypeTag>
         nonWettingPhaseIdx = FluidSystem::nonWettingPhaseIdx,
 
         // Grid and world dimension
-        dim = GET_PROP_VALUE(TypeTag, DomainDim),
+        dim = getPropValue<TypeTag, Properties::DomainDim>(),
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     using ParentType::ParentType;

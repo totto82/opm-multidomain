@@ -40,15 +40,27 @@ template <class TypeTag>
 class MultiDomainBaseModel;
 }
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(MultiDomainBaseModel, INHERITS_FROM(MultiDomain));
+namespace Opm::Properties {
 
-SET_TYPE_PROP(MultiDomainBaseModel, Model,
-              Opm::MultiDomainBaseModel<TypeTag>);
-SET_TYPE_PROP(MultiDomainBaseModel, Simulator,
-              Opm::MultiDomainSimulator<TypeTag>);
-SET_SCALAR_PROP(MultiDomainBaseModel, MaxTimeStepSize, std::numeric_limits<Scalar>::infinity());
-END_PROPERTIES
+//! The generic type tag for problems using the dual porosity coupler
+namespace TTag {
+struct MultiDomainBaseModel { using InheritsFrom = std::tuple<MultiDomain>; };
+} // end namespace TTag
+
+template<class TypeTag>
+struct Model<TypeTag, TTag::MultiDomainBaseModel> { using type = Opm::MultiDomainBaseModel<TypeTag>; };
+
+template<class TypeTag>
+struct Simulator<TypeTag, TTag::MultiDomainBaseModel> { using type = Opm::MultiDomainSimulator<TypeTag>; };
+
+template<class TypeTag>
+struct MaxTimeStepSize<TypeTag, TTag::MultiDomainBaseModel> 
+{
+    using type = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr type value = std::numeric_limits<type>::infinity();
+};
+
+} //end namespace Opm::Properties
 
 namespace Opm
 {
@@ -65,11 +77,10 @@ namespace Opm
 template <class TypeTag>
 class MultiDomainBaseModel
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Linearizer) Linearizer;
-    typedef typename GET_PROP_TYPE(TypeTag, Simulator) Simulator;
-
-    using SubTypes = typename GET_PROP_TYPE(TypeTag, SubTypeTag);
-    using CouplerTypes = typename GET_PROP_TYPE(TypeTag, CouplerTypeTag);
+    using Linearizer = GetPropType<TypeTag, Properties::Linearizer>;
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
+    using SubTypes = GetPropType<TypeTag, Properties::SubTypeTag>;
+    using CouplerTypes = GetPropType<TypeTag, Properties::CouplerTypeTag>;
 
     template <std::size_t i>
     using SubSimulator = typename SubTypes::template Simulator<i>;

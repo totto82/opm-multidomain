@@ -36,14 +36,17 @@ template <class TypeTag>
 class Benchmark4Problem;
 }
 
-BEGIN_PROPERTIES
+namespace Opm::Properties {
+// Create new type tags
+namespace TTag {
+struct Benchmark4Problem { using InheritsFrom = std::tuple<Darcy1PBaseProblem>; };
+} // end namespace TTag
 
-NEW_TYPE_TAG(Benchmark4Problem, INHERITS_FROM(Darcy1PBaseProblem));
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Benchmark4Problem> { using type = Opm::Benchmark4Problem<TypeTag>; };
 
-SET_TYPE_PROP(Benchmark4Problem, Problem,
-              Opm::Benchmark4Problem<TypeTag>);
+} // end namespace Opm::Properties
 
-END_PROPERTIES
 
 namespace Opm
 {
@@ -63,26 +66,25 @@ namespace Opm
 template <class TypeTag>
 class Benchmark4Problem : public Opm::Darcy1PProblem<TypeTag>
 {
-    typedef Opm::Darcy1PProblem<TypeTag> ParentType;
+    using ParentType = Opm::Darcy1PProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, RateVector) RateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryRateVector) BoundaryRateVector;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using RateVector = GetPropType<TypeTag, Properties::RateVector>;
+    using BoundaryRateVector = GetPropType<TypeTag, Properties::BoundaryRateVector>;
 
     enum
     {
         numPhases = FluidSystem::numPhases,
         // Grid and world dimension
-        dim = GET_PROP_VALUE(TypeTag, DomainDim),
+        dim = getPropValue<TypeTag, Properties::DomainDim>(),
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     using ParentType::ParentType;

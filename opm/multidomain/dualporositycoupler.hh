@@ -33,11 +33,11 @@
 
 #include <opm/material/densead/Math.hpp>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/models/multiDomain/couplingelementcontext.hh>
-#include <opm/models/multiDomain/ecfvcouplingstencil.hh>
-#include <opm/models/multiDomain/multidomainmapper.hh>
-#include <opm/models/multiDomain/multidomaincoupler.hh>
-#include <opm/models/multiDomain/multidomainproperties.hh>
+#include <opm/multidomain/couplingelementcontext.hh>
+#include <opm/multidomain/ecfvcouplingstencil.hh>
+#include <opm/multidomain/multidomainmapper.hh>
+#include <opm/multidomain/multidomaincoupler.hh>
+#include <opm/multidomain/multidomainproperties.hh>
 
 #include <dune/common/indices.hh>
 
@@ -48,30 +48,57 @@ template <class TypeTag>
 class DualPorosityCoupler;
 } // namespace Opm
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(DualPorosityCoupler, INHERITS_FROM(DarcyCoupler));
+namespace Opm::Properties {
 
-SET_TYPE_PROP(DualPorosityCoupler, Coupler, Opm::DualPorosityCoupler<TypeTag>);
-SET_TYPE_PROP(DualPorosityCoupler, CouplingMapper, Opm::ElementElementMapper<TypeTag>);
-SET_TYPE_PROP(DualPorosityCoupler, CouplingElementContext, Opm::CouplingElementContext<TypeTag>);
-SET_TYPE_PROP(DualPorosityCoupler, Simulator, Opm::DualPorosityCoupler<TypeTag>);
+//! The generic type tag for problems using the dual porosity coupler
+namespace TTag {
+struct DualPorosityCoupler { using InheritsFrom = std::tuple<DarcyCoupler>; };
+} // end namespace TTag
 
-SET_INT_PROP(DualPorosityCoupler, TimeDiscHistorySize, 0);
-SET_STRING_PROP(DualPorosityCoupler, MappingFile, "");
+//! Set parameters for type tag
 
-SET_PROP(DualPorosityCoupler, Stencil)
-{
+// //! Set the function evaluation w.r.t. the primary variables
+// template<class TypeTag>
+// struct Evaluation<TypeTag, TTag::DualPorosityCoupler>
+// {
+// private:
+//     static const unsigned numEq = getPropValue<TypeTag, Properties::NumEq>();
+
+//     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+// public:
+//     using type = Opm::DenseAd::Evaluation<Scalar, numEq>;
+// };
+
+//! set the Coupler type
+template<class TypeTag>
+struct Coupler<TypeTag, TTag::DualPorosityCoupler> { using type = Opm::DualPorosityCoupler<TypeTag>; };
+
+//! set the Coupler mapper
+template<class TypeTag>
+struct CouplingMapper<TypeTag, TTag::DualPorosityCoupler> { using type = Opm::ElementElementMapper<TypeTag>; };
+
+//! set the Coupler Element context
+template<class TypeTag>
+struct CouplingElementContext<TypeTag, TTag::DualPorosityCoupler> { using type = Opm::CouplingElementContext<TypeTag>; };
+
+//! The simulator is the same os the coupler
+template<class TypeTag>
+struct Simulator<TypeTag, TTag::DualPorosityCoupler> { using type = Opm::DualPorosityCoupler<TypeTag>; };
+
+//! Set the copuling stencil
+template<class TypeTag>
+struct Stencil<TypeTag, TTag::DualPorosityCoupler> {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) Mapper;
-    typedef typename GET_PROP_TYPE(TypeTag, SubTypeTag) SubTypeTag;
-
+    using Scalar = GetPropType<TypeTag, Scalar>;
+    using GridView = GetPropType<TypeTag, GridView>;
+    using Mapper = GetPropType<TypeTag, CouplingMapper>;
+    using SubTypeTag = GetPropType<TypeTag, SubTypeTag>;
 public:
-    typedef Opm::EcfvDualPorosityStencil<Scalar, GridView, Mapper, SubTypeTag> type;
+    using type = Opm::EcfvDualPorosityStencil<Scalar, GridView, Mapper, SubTypeTag>;
 };
 
-END_PROPERTIES
+}
 
 namespace Opm {
 
@@ -92,15 +119,18 @@ namespace Opm {
 template <class TypeTag>
 class DualPorosityCoupler: public Opm::DarcyCoupler<TypeTag> {
     using ParentType = Opm::DarcyCoupler<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, SubTypeTag) SubTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingElementContext) CouplingElementContext;
+    using SubTypeTag = GetPropType<TypeTag, Properties::SubTypeTag>;
+    using CouplingElementContext = GetPropType<TypeTag, Properties::CouplingElementContext>;
 
+    using Evaluation = GetPropType<typename SubTypeTag::template SubDomain<0>::TypeTag,
+                                   Properties::Evaluation>;
 
-    typedef typename GET_PROP_TYPE(typename SubTypeTag::template SubDomain<0>::TypeTag, Evaluation) Evaluation;
+    //using Evaluation = GetPropType<SubTypeTag::template SubDomain<0>::TypeTag, Properties::Evaluation);
+    //using Evaluation = GetPropType<TypeTag, Properties::Evaluation);
 
     enum {
-        numPhases = GET_PROP_VALUE(typename SubTypeTag::template SubDomain<0>::TypeTag, NumPhases),
-        EnableGravity_ = GET_PROP_VALUE(typename SubTypeTag::template SubDomain<0>::TypeTag, EnableGravity)
+        numPhases = getPropValue<TypeTag, Properties::NumPhases>(),
+        EnableGravity_ = getPropValue<TypeTag, Properties::EnableGravity>()
     };
 
 
@@ -123,7 +153,6 @@ public:
     void volumeFlux(const CouplingElementContext& elemCtx)
     {
         const auto& stencil = elemCtx.stencil(/*timeIdx=*/0);
-
         const auto& face = stencil.template interiorFace<0>(0);
         auto focusDofIdx = elemCtx.focusDofIndex();
         for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {

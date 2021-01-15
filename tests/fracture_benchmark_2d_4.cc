@@ -29,26 +29,34 @@
 #include "problems/benchmark2dproblem4.hh"
 
 #include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/multidomain/utils/start.hh>
+#include <opm/multidomain/utils/multidomainstart.hh>
 
 
-const auto FILE_NAME2D = "./data/benchmark4_2.txt";
-const auto FILE_NAME1D = "./data/benchmark4_1.txt";
-const auto FILE_NAME0D = "./data/benchmark4_0.txt";
+constexpr auto FILE_NAME3D = "";
+constexpr auto FILE_NAME2D = "./data/benchmark4_2.txt";
+constexpr auto FILE_NAME1D = "./data/benchmark4_1.txt";
+constexpr auto FILE_NAME0D = "./data/benchmark4_0.txt";
 
-const auto FILE_NAME_MORTAR1D = "./data/benchmark4_mortar_1.txt";
-const auto FILE_NAME_MORTAR0D = "./data/benchmark4_mortar_0.txt";
-const auto FILE_NAME_MAPPING2D1D = "./data/benchmark4_mapping_1.txt";
-const auto FILE_NAME_MAPPING1D0D = "./data/benchmark4_mapping_0.txt";
+constexpr auto FILE_NAME_MORTAR2D = "";
+constexpr auto FILE_NAME_MORTAR1D = "./data/benchmark4_mortar_1.txt";
+constexpr auto FILE_NAME_MORTAR0D = "./data/benchmark4_mortar_0.txt";
+constexpr auto FILE_NAME_MAPPING3D2D = "";
+constexpr auto FILE_NAME_MAPPING2D1D = "./data/benchmark4_mapping_1.txt";
+constexpr auto FILE_NAME_MAPPING1D0D = "./data/benchmark4_mapping_0.txt";
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(BenchmarkProblem, INHERITS_FROM(ImmiscibleSinglePhaseModel, Benchmark4Problem));
-END_PROPERTIES
+// Create new type tags
+namespace Opm::Properties {
+
+namespace TTag {
+struct BenchmarkProblem {
+    using InheritsFrom = std::tuple<Benchmark4Problem>;
+};
+}  // end namespace TTag
+}  // end namespace Opm::Properties
 
 #include "benchmark2d.hh"
 
-int main(int argc, char **argv)
-{
-    typedef TTAG(MultiDimModel) MixedDimModelTypeTag;
-    start<MixedDimModelTypeTag>(argc, argv);
+int main(int argc, char **argv) {
+    using MixedDimModelTypeTag = Opm::Properties::TTag::MultiDimModel;
+    Opm::multidomainStart<MixedDimModelTypeTag>(argc, argv);
 }

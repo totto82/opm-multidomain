@@ -36,6 +36,7 @@
 #include <opm/material/fluidsystems/LiquidPhase.hpp>
 #include <opm/material/common/Unused.hpp>
 #include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/models/utils/basicproperties.hh>
 #include <opm/simulators/linalg/parallelistlbackend.hh>
 
 #include <dune/common/version.hh>
@@ -51,54 +52,78 @@ template <class TypeTag>
 class Darcy1PProblem;
 }
 
-BEGIN_PROPERTIES
+namespace Opm::Properties {
+// Create new type tags
+namespace TTag {
+struct Darcy1PBaseProblem { using InheritsFrom = std::tuple<ImmiscibleSinglePhaseModel, ImplicitModel>; };
+} // end namespace TTag
 
-NEW_TYPE_TAG(Darcy1PBaseProblem, INHERITS_FROM(ImmiscibleSinglePhaseModel));
+template<class TypeTag, class MyTypeTag>
+struct NameSurfix { using type = UndefinedProperty; };
 
-NEW_PROP_TAG(NameSurfix);
-NEW_PROP_TAG(DomainDim);
-NEW_PROP_TAG(WorldDim);
-NEW_PROP_TAG(GridDim);
+template<class TypeTag, class MyTypeTag>
+struct DomainDim { using type = UndefinedProperty; };
 
-SET_STRING_PROP(Darcy1PBaseProblem, NameSurfix, "");
-SET_INT_PROP(Darcy1PBaseProblem, WorldDim, 2);
-SET_INT_PROP(Darcy1PBaseProblem, DomainDim, 2);
+template<class TypeTag, class MyTypeTag>
+struct WorldDim { using type = UndefinedProperty; };
 
-SET_PROP(Darcy1PBaseProblem, Fluid)
+template<class TypeTag, class MyTypeTag>
+struct GridDim { using type = UndefinedProperty; };
+
+template<class TypeTag>
+struct NameSurfix<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr auto value = ""; };
+
+template<class TypeTag>
+struct WorldDim<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr int value = 2; };
+
+template<class TypeTag>
+struct DomainDim<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr int value = 2; };
+
+template<class TypeTag>
+struct Fluid<TypeTag, TTag::Darcy1PBaseProblem>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    typedef Opm::LiquidPhase<Scalar, Opm::Unit<Scalar>> type;
+    using type = Opm::LiquidPhase<Scalar, Opm::Unit<Scalar>>;
 };
 
-SET_TYPE_PROP(Darcy1PBaseProblem, Problem,
-              Opm::Darcy1PProblem<TypeTag>);
+template<class TypeTag>
+struct Problem<TypeTag, TTag::Darcy1PBaseProblem> { using type = Opm::Darcy1PProblem<TypeTag>; };
 
-// Define grid type
-SET_TYPE_PROP(Darcy1PBaseProblem, Grid, Dune::PolyhedralGrid<GET_PROP_VALUE(TypeTag, GridDim), GET_PROP_VALUE(TypeTag, WorldDim)>);
+template<class TypeTag>
+struct Grid<TypeTag, TTag::Darcy1PBaseProblem> {
+private:
+    enum{ gridDim = getPropValue<TypeTag, Properties::GridDim>() };
+    enum{ worldDim = getPropValue<TypeTag, Properties::WorldDim>() };
+public:
+    using type = Dune::PolyhedralGrid<gridDim, worldDim>;
+};
 
-// Dissable gravity
-SET_BOOL_PROP(Darcy1PBaseProblem, EnableGravity, false);
+template<class TypeTag>
+struct EnableGravity<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr bool value = false; };
 
-// The default for the end time of the simulation
-SET_SCALAR_PROP(Darcy1PBaseProblem, EndTime, 1);
+template<class TypeTag>
+struct EndTime<TypeTag, TTag::Darcy1PBaseProblem> {
+    using type = GetPropType<TypeTag, Scalar>;
+    static constexpr type value = 1;
+};
 
-// The default for the initial time step size of the simulation
-SET_SCALAR_PROP(Darcy1PBaseProblem, InitialTimeStepSize, 1);
+template<class TypeTag>
+struct InitialTimeStepSize<TypeTag, TTag::Darcy1PBaseProblem> {
+    using type = GetPropType<TypeTag, Scalar>;
+    static constexpr type value = 1;
+};
 
-// Use the conjugated gradient linear solver with the default preconditioner (i.e.,
-// ILU-0) from dune-istl
-SET_TAG_PROP(Darcy1PBaseProblem, LinearSolverSplice, ParallelIstlLinearSolver);
-SET_TYPE_PROP(Darcy1PBaseProblem, LinearSolverWrapper,
-              Opm::Linear::SolverWrapperConjugatedGradients<TypeTag>);
-// For debugging
-SET_BOOL_PROP(Darcy1PBaseProblem, VtkWriteSaturations, true);
-SET_BOOL_PROP(Darcy1PBaseProblem, VtkWriteMobilities, true);
-SET_BOOL_PROP(Darcy1PBaseProblem, VtkWriteRelativePermeabilities, true);
+template<class TypeTag>
+struct VtkWriteSaturations<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr bool value = false; };
+template<class TypeTag>
+struct VtkWriteMobilities<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr bool value = false; };
+template<class TypeTag>
+struct VtkWriteRelativePermeabilities<TypeTag, TTag::Darcy1PBaseProblem> { static constexpr bool value = false; };
 
-END_PROPERTIES
+} // end namespace Opm::Properties
+
 
 namespace Opm
 {
@@ -116,39 +141,37 @@ namespace Opm
  * occupied by a rectangular lens of lower permeability.
  */
 template <class TypeTag>
-class Darcy1PProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
+class Darcy1PProblem : public GetPropType<TypeTag, Properties::BaseProblem>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, BaseProblem) ParentType;
+    using ParentType = GetPropType<TypeTag, Properties::BaseProblem>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = GetPropType<TypeTag, Properties::Indices>;
+    using EqVector = GetPropType<TypeTag, Properties::EqVector>;
+    using RateVector = GetPropType<TypeTag, Properties::RateVector>;
+    using BoundaryRateVector = GetPropType<TypeTag, Properties::BoundaryRateVector>;
+    using Model = GetPropType<TypeTag, Properties::Model>;
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
 
-    // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum
     {
         numPhases = FluidSystem::numPhases,
 
         // Grid and world dimension
-        dim = GET_PROP_VALUE(TypeTag, DomainDim), 
+        dim = getPropValue<TypeTag, Properties::DomainDim>(),
         dimWorld = GridView::dimensionworld,
 
         // indices of the primary variables
         pressure0Idx = Indices::pressure0Idx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Simulator) Simulator;
-    typedef typename GET_PROP_TYPE(TypeTag, EqVector) EqVector;
-    typedef typename GET_PROP_TYPE(TypeTag, RateVector) RateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryRateVector) BoundaryRateVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimMatrix;
 
 public:
     /*!
@@ -199,7 +222,7 @@ public:
     std::string name() const
     {
         std::ostringstream oss;
-        oss << "darcy1PProblem_" << GET_PROP_VALUE(TypeTag, NameSurfix);
+        oss << "darcy1PProblem_" << getPropValue<TypeTag, Properties::NameSurfix>();
         return oss.str();
     }
 
@@ -323,7 +346,7 @@ public:
     /*!
      * \copydoc FvBaseProblem::initial
      */
-    template <class Context>
+    template <class PrimaryVariables, class Context>
     void initial(PrimaryVariables &values,
                  const Context &context OPM_UNUSED,
                  unsigned spaceIdx OPM_UNUSED,

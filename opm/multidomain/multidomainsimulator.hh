@@ -37,13 +37,16 @@ namespace Opm {
 template <class TypeTag>
 class MultiDomainSimulator;
 }
+namespace Opm::Properties {
+namespace TTag{
+struct MultiDomainSimulator { using InheritsFrom = std::tuple<MultiDomain>; };
+} // end namespace TTag
 
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(MultiDomainSimulator, INHERITS_FROM(MultiDomain));
+template<class TypeTag>
+struct Model<TypeTag, TTag::MultiDomainSimulator>{ using type = Opm::MultiDomainSimulator<TypeTag>; };
 
-SET_TYPE_PROP(MultiDomainSimulator, Model,
-    Opm::MultiDomainSimulator<TypeTag>);
-END_PROPERTIES
+} // end namespace Opm::Properties
+
 
 namespace Opm {
 /*!
@@ -58,8 +61,9 @@ namespace Opm {
 */
 template <class TypeTag>
 class MultiDomainSimulator {
-    using SubTypes = typename GET_PROP_TYPE(TypeTag, SubTypeTag);
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
+    using SubTypes = GetPropType<TypeTag, Properties::SubTypeTag>;
+    using Model = GetPropType<TypeTag, Properties::Model>;
+
     template <std::size_t i>
     using SubSimulator = typename SubTypes::template Simulator<i>;
     template <std::size_t i>

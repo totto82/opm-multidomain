@@ -29,100 +29,222 @@
 #ifndef OPM_FRACTURE_BENCHMARK_2D_HH
 #define OPM_FRACTURE_BENCHMARK_2D_HH
 
-#include "config.h"
+#include "benchmarkproperties.hh"
 
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
-#include <opm/models/io/unstructuredgridvanguard.hh>
-#include <opm/multidomain/multidomaincoupler.hh>
-#include <opm/multidomain/multidomainmodel.hh>
-#include <opm/multidomain/multidomainproperties.hh>
-#include <opm/multidomain/multidomainlinearizer.hh>
-
-BEGIN_PROPERTIES
-NEW_TYPE_TAG(Domain2D, INHERITS_FROM(BenchmarkProblem));
-SET_TYPE_PROP(Domain2D, Vanguard, Opm::UnstructuredGridVanguard<TypeTag>);
-SET_TAG_PROP(Domain2D, LocalLinearizerSplice, AutoDiffLocalLinearizer);
-// use the element centered finite volume spatial discretization
-SET_INT_PROP(Domain2D, GridDim, 2);
-SET_INT_PROP(Domain2D, DomainDim, 2);
-SET_TAG_PROP(Domain2D, SpatialDiscretizationSplice, EcfvDiscretization);
-SET_STRING_PROP(Domain2D, GridFile, FILE_NAME2D);
-SET_STRING_PROP(Domain2D, NameSurfix, "2D");
-SET_BOOL_PROP(Domain2D, UseVolumetricResidual, 0);
-
-NEW_TYPE_TAG(Domain1D, INHERITS_FROM(Domain2D));
-SET_INT_PROP(Domain1D, GridDim, 1);
-SET_INT_PROP(Domain1D, DomainDim, 1);
-SET_STRING_PROP(Domain1D, GridFile, FILE_NAME1D);
-SET_STRING_PROP(Domain1D, NameSurfix, "1D");
-
-NEW_TYPE_TAG(Domain0D, INHERITS_FROM(Domain1D));
-SET_INT_PROP(Domain0D, GridDim, 1);
-SET_INT_PROP(Domain0D, DomainDim, 0);
-SET_STRING_PROP(Domain0D, GridFile, FILE_NAME0D);
-SET_BOOL_PROP(Domain0D, EnableVtkOutput, false);
+#include <dune/common/indices.hh>
 
 
-// Add the Domain2D Domain1D coupler
-NEW_TYPE_TAG(Coupler21, INHERITS_FROM(DarcyCoupler));
-SET_TYPE_PROP(Coupler21, Vanguard, Opm::UnstructuredGridVanguard<TypeTag>);
-SET_INT_PROP(Coupler21, GridDim, 1);
-SET_INT_PROP(Coupler21, WorldDim, 2);
-SET_STRING_PROP(Coupler21, GridFile, FILE_NAME_MORTAR1D);
-SET_STRING_PROP(Coupler21, MappingFile, FILE_NAME_MAPPING2D1D);
-SET_TYPE_PROP(Coupler21, Grid, GET_PROP_TYPE(TTAG(Domain1D), Grid));
-SET_TYPE_PROP(Coupler21, Scalar, GET_PROP_TYPE(TTAG(Domain2D), Scalar));
-SET_TYPE_PROP(Coupler21, CouplingMapper, Opm::FaceElementMapper<TypeTag>);
-SET_TYPE_PROP(Coupler21, DomainI, Dune::index_constant<0>);
-SET_TYPE_PROP(Coupler21, DomainJ, Dune::index_constant<1>);
-SET_PROP(Coupler21, SubTypeTag)
-{
-    typedef TTAG(Domain2D) Domain2DTypeTag;
-    typedef TTAG(Domain1D) Domain1DTypeTag;
+namespace Opm::Properties {
+// // Create new type tags
+// namespace TTag {
+// struct Domain2D { using InheritsFrom = std::tuple<BenchmarkProblem>; };
 
-public:
-    typedef Opm::MultiDomainProperties<Domain2DTypeTag, Domain1DTypeTag> type;
+// struct Domain1D { using InheritsFrom = std::tuple<Domain2D>; };
+
+// struct Domain0D { using InheritsFrom = std::tuple<Domain1D>; };
+
+// struct Coupler21 {using InheritsFrom = std::tuple<DarcyCoupler>; };
+
+// struct Coupler10 {using InheritsFrom = std::tuple<Coupler21>; };
+
+// struct MultiDimModel {using InheritsFrom = std::tuple<MultiDomainBaseModel>; };
+// }  // end namespace TTag
+
+// // Set the properties of the 2d domain
+// template <class TypeTag>
+// struct Vanguard<TypeTag, TTag::Domain2D> { using type = Opm::UnstructuredGridVanguard<TypeTag>; };
+
+// // use the element centered finite volume spatial discretization
+// template<class TypeTag>
+// struct SpatialDiscretizationSplice<TypeTag, TTag::Domain2D> { using type = TTag::EcfvDiscretization; };
+
+// // use automatic differentiation for this simulator
+// template<class TypeTag>
+// struct LocalLinearizerSplice<TypeTag, TTag::Domain2D> { using type = TTag::AutoDiffLocalLinearizer; };
+
+// // Set the grid dimension
+// template<class TypeTag>
+// struct GridDim<TypeTag, TTag::Domain2D> { static constexpr int value = 2; };
+
+// // Set the domain dimension
+// template<class TypeTag>
+// struct DomainDim<TypeTag, TTag::Domain2D> { static constexpr int value = 2; };
+
+// // Set the grid file name
+// template<class TypeTag>
+// struct GridFile<TypeTag, TTag::Domain2D> { static constexpr auto value = FILE_NAME2D; };
+
+// // Set the output file surfix
+// template<class TypeTag>
+// struct NameSurfix<TypeTag, TTag::Domain2D> { static constexpr auto value = "2D"; };
+
+// // Do not use volumetric residual
+// template<class TypeTag>
+// struct UseVolumetricResidual<TypeTag, TTag::Domain2D> { static constexpr bool value = false; };
+
+// //////////////////////////////////////////////////////////////////////////////////////
+// // Set the properties of the 1d domain
+// // Set the grid dimension
+// template<class TypeTag>
+// struct GridDim<TypeTag, TTag::Domain1D> { static constexpr int value = 1; };
+
+// // Set the domain dimension
+// template<class TypeTag>
+// struct DomainDim<TypeTag, TTag::Domain1D> { static constexpr int value = 1; };
+
+// // Set the grid file name
+// template<class TypeTag>
+// struct GridFile<TypeTag, TTag::Domain1D> { static constexpr auto value = FILE_NAME1D; };
+
+// // Set the output file surfix
+// template<class TypeTag>
+// struct NameSurfix<TypeTag, TTag::Domain1D> { static constexpr auto value = "1D"; };
+
+
+// //////////////////////////////////////////////////////////////////////////////////////
+// // Set the properties of the 0d domain
+// // Set the grid dimension
+// template<class TypeTag>
+// struct GridDim<TypeTag, TTag::Domain0D> { static constexpr int value = 1; };
+
+// // Set the domain dimension
+// template<class TypeTag>
+// struct DomainDim<TypeTag, TTag::Domain0D> { static constexpr int value = 0; };
+
+// // Set the grid file name
+// template<class TypeTag>
+// struct GridFile<TypeTag, TTag::Domain0D> { static constexpr auto value = FILE_NAME0D; };
+
+// // Do not write output for 0d domain
+// template<class TypeTag>
+// struct EnableVtkOutput<TypeTag, TTag::Domain0D> { static constexpr bool value = false; };
+
+// //////////////////////////////////////////////////////////////////////////////////////
+// // Set the properties of the 2d-1d Coupler
+// template <class TypeTag>
+// struct Vanguard<TypeTag, TTag::Coupler21> { using type = Opm::UnstructuredGridVanguard<TypeTag>; };
+
+// // Set the grid dimension
+// template<class TypeTag>
+// struct GridDim<TypeTag, TTag::Coupler21> { static constexpr int value = 1; };
+
+// // Set leaf view
+// template<class TypeTag>
+// struct MortarView<TypeTag, TTag::Coupler21>
+// { using type = typename GetPropType<TTag::Domain1D, Properties::Grid>::LeafGridView; };
+
+// // Set the grid file name
+// template<class TypeTag>
+// struct GridFile<TypeTag, TTag::Coupler21> { static constexpr auto value = FILE_NAME_MORTAR1D; };
+
+// // Set the file containing the mapping between domains
+// template<class TypeTag>
+// struct MappingFile<TypeTag, TTag::Coupler21> { static constexpr auto value = FILE_NAME_MAPPING2D1D; };
+
+// template<class TypeTag>
+// struct Grid<TypeTag, TTag::Coupler21>
+// { using type = GetPropType<TTag::Domain1D, Properties::Grid>; };
+
+// template<class TypeTag>
+// struct Scalar<TypeTag, TTag::Coupler21>
+// { using type = GetPropType<TTag::Domain1D, Properties::Scalar>; };
+
+// template<class TypeTag>
+// struct CouplingMapper<TypeTag, TTag::Coupler21>
+// { using type = Opm::FaceElementMapper<TypeTag>; };
+
+// template<class TypeTag>
+// struct DomainI<TypeTag, TTag::Coupler21>
+// { using type = Dune::index_constant<0>; };
+
+// template<class TypeTag>
+// struct DomainJ<TypeTag, TTag::Coupler21>
+// { using type = Dune::index_constant<1>; };
+
+// template<class TypeTag>
+// struct SubTypeTag<TypeTag, TTag::Coupler21>
+// {
+//     using type = Opm::MultiDomainProperties<TTag::Domain2D, TTag::Domain1D>;
+// };
+
+// //////////////////////////////////////////////////////////////////////////////////////
+// // Set the properties of the 1d-0d Coupler
+// // Set the grid dimension
+// template<class TypeTag>
+// struct GridDim<TypeTag, TTag::Coupler10> { static constexpr int value = 0; };
+
+// // Set the grid file name
+// template<class TypeTag>
+// struct GridFile<TypeTag, TTag::Coupler10> { static constexpr auto value = FILE_NAME_MORTAR0D; };
+
+// // Set the file containing the mapping between domains
+// template<class TypeTag>
+// struct MappingFile<TypeTag, TTag::Coupler10> { static constexpr auto value = FILE_NAME_MAPPING1D0D; };
+
+// template<class TypeTag>
+// struct DomainI<TypeTag, TTag::Coupler10>
+// { using type = Dune::index_constant<1>; };
+
+// template<class TypeTag>
+// struct DomainJ<TypeTag, TTag::Coupler10>
+// { using type = Dune::index_constant<2>; };
+
+// template<class TypeTag>
+// struct SubTypeTag<TypeTag, TTag::Coupler10>
+// {
+//     using type = Opm::MultiDomainProperties<TTag::Domain1D, TTag::Domain0D>;
+// };
+
+
+// //////////////////////////////////////////////////////////////////////////////////////
+// // Set the properties of the multi-dimensional problem
+// // Set the linearizer
+// template<class TypeTag>
+// struct Linearizer<TypeTag, TTag::MultiDimModel>
+// {
+//     using type = Opm::MultiDomainLinearizer< TypeTag >;
+// };
+
+// Set end time of simulation
+template<class TypeTag>
+struct EndTime<TypeTag, TTag::MultiDimModel> {
+    using type = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr type value = 1;
 };
 
-
-NEW_TYPE_TAG(Coupler10, INHERITS_FROM(Coupler21));
-SET_STRING_PROP(Coupler10, GridFile, FILE_NAME_MORTAR0D);
-SET_STRING_PROP(Coupler10, MappingFile, FILE_NAME_MAPPING1D0D);
-SET_INT_PROP(Coupler10, GridDim, 0);
-SET_TYPE_PROP(Coupler10, DomainI, Dune::index_constant<1>);
-SET_TYPE_PROP(Coupler10, DomainJ, Dune::index_constant<2>);
-SET_PROP(Coupler10, SubTypeTag)
-{
-    typedef TTAG(Domain1D) Domain1DTypeTag;
-    typedef TTAG(Domain0D) Domain0DTypeTag;
-
-public:
-    typedef Opm::MultiDomainProperties<Domain1DTypeTag, Domain0DTypeTag> type;
+// Set initial time step of simulation
+template<class TypeTag>
+struct InitialTimeStepSize<TypeTag, TTag::MultiDimModel> {
+    using type = GetPropType<TypeTag, Properties::Scalar>;
+    static constexpr type value = 1;
 };
 
-NEW_TYPE_TAG(MultiDimModel, INHERITS_FROM(MultiDomainBaseModel));
-SET_TYPE_PROP(MultiDomain, Linearizer, Opm::MultiDomainLinearizer< TypeTag >);
-SET_TYPE_PROP(MultiDimModel, MortarView, typename GET_PROP_TYPE(TTAG(Domain1D), Grid)::LeafGridView);
-SET_SCALAR_PROP(MultiDimModel, EndTime, 1);
-SET_SCALAR_PROP(MultiDimModel, InitialTimeStepSize, 1);
-SET_PROP(MultiDimModel, SubTypeTag)
+// Set active domain type tags
+template<class TypeTag>
+struct SubTypeTag<TypeTag, TTag::MultiDimModel>
 {
-    typedef TTAG(Domain2D) Domain2DType;
-    typedef TTAG(Domain1D) Domain1DType;
-    typedef TTAG(Domain0D) Domain0DType;
-
-public:
-    typedef Opm::MultiDomainProperties<Domain2DType, Domain1DType, Domain0DType> type;
+    using type = Opm::MultiDomainProperties<TTag::Domain2D, TTag::Domain1D, TTag::Domain0D>;
 };
-SET_PROP(MultiDimModel, CouplerTypeTag)
+// Set active copuler type tags
+template<class TypeTag>
+struct CouplerTypeTag<TypeTag, TTag::MultiDimModel>
 {
-    typedef TTAG(Coupler21) Coupler0;
-    typedef TTAG(Coupler10) Coupler1;
-
-public:
-    typedef Opm::MultiCouplerProperties<Coupler0, Coupler1> type;
+    using type = Opm::MultiCouplerProperties<TTag::Coupler21, TTag::Coupler10>;
 };
 
-END_PROPERTIES
+// Define domain copuling ids:
+// 2d -> 1d
+template <class TypeTag>
+struct DomainI<TypeTag, TTag::Coupler21> { using type = Dune::index_constant<0>; };
+template <class TypeTag>
+struct DomainJ<TypeTag, TTag::Coupler21> { using type = Dune::index_constant<1>; };
 
-#endif
+// 1d -> 0d
+template <class TypeTag>
+struct DomainI<TypeTag, TTag::Coupler10> { using type = Dune::index_constant<1>; };
+template <class TypeTag>
+struct DomainJ<TypeTag, TTag::Coupler10> { using type = Dune::index_constant<2>; };
+
+} // end namespace Opm::Properties
+
+#endif // OPM_FRACTURE_BENCHMARK_2D_HH

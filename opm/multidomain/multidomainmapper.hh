@@ -45,11 +45,15 @@ namespace Opm {
  */
 template <class TypeTag>
 class BaseMapper {
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) MortarView;
+    // Get types
+    using Implementation = GetPropType<TypeTag, Properties::CouplingMapper>;
+    using MortarView = GetPropType<TypeTag, Properties::GridView>;
+    
+    // Get types of sub-domains
     template <std::size_t i>
-    using GridView = typename GET_PROP_TYPE(TypeTag,
-        SubTypeTag)::template GridView<i>;
+    using GridView = typename GetPropType<TypeTag, Properties::SubTypeTag>::template GridView<i>;
+
+    // Get types of intersections and elements
     template <std::size_t i>
     using Intersection = typename GridView<i>::Intersection;
     typedef typename MortarView::template Codim<0>::Entity MortarElement;
@@ -315,15 +319,15 @@ protected:
  */
 template <class TypeTag>
 class FaceFaceMapper : public BaseMapper<TypeTag> {
-    typedef BaseMapper<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) Implementation;
+    using ParentType = BaseMapper<TypeTag>;
+    using Implementation = GetPropType<TypeTag, Properties::CouplingMapper>;
+    using MortarView = GetPropType<TypeTag, Properties::GridView>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) MortarView;
     template <std::size_t i>
-    using GridView = typename GET_PROP_TYPE(TypeTag,
-        SubTypeTag)::template GridView<i>;
+    using GridView = typename GetPropType<TypeTag, Properties::SubTypeTag>::template GridView<i>;
     template <std::size_t i>
     using Intersection = typename GridView<i>::Intersection;
+
     typedef std::tuple<std::vector<Intersection<0>>, std::vector<Intersection<1>>>
         ElementMap;
     typedef typename MortarView::template Codim<0>::Entity MortarElement;
@@ -426,20 +430,18 @@ protected:
  */
 template <class TypeTag>
 class FaceElementMapper : public BaseMapper<TypeTag> {
-    typedef BaseMapper<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) Implementation;
+    using ParentType = BaseMapper<TypeTag>;
+    using Implementation = GetPropType<TypeTag, Properties::CouplingMapper>;
+    using MortarView = GetPropType<TypeTag, Properties::GridView>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) MortarView;
     template <std::size_t i>
-    using GridView = typename GET_PROP_TYPE(TypeTag,
-        SubTypeTag)::template GridView<i>;
+    using GridView = typename GetPropType<TypeTag, Properties::SubTypeTag>::template GridView<i>;
     template <std::size_t i>
     using Intersection = typename GridView<i>::Intersection;
     template <std::size_t i>
     using Element = typename GridView<i>::template Codim<0>::Entity;
-    typedef std::tuple<std::vector<Intersection<0>>, std::vector<Element<1>>>
-        ElementMap;
-    typedef typename MortarView::template Codim<0>::Entity MortarElement;
+    using ElementMap = std::tuple<std::vector<Intersection<0>>, std::vector<Element<1>>>;
+    using MortarElement = typename MortarView::template Codim<0>::Entity;
     enum {
         dimWorld = MortarView::dimensionworld
     };
@@ -630,21 +632,21 @@ protected:
  */
 template <class TypeTag>
 class ElementElementMapper : public BaseMapper<TypeTag> {
-    typedef BaseMapper<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingMapper) Implementation;
+    using ParentType = BaseMapper<TypeTag>;
+    using Implementation = GetPropType<TypeTag, Properties::CouplingMapper>;
+    using MortarView = GetPropType<TypeTag, Properties::GridView>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) MortarView;
     template <std::size_t i>
-    using GridView = typename GET_PROP_TYPE(TypeTag,
-        SubTypeTag)::template GridView<i>;
+    using GridView = typename GetPropType<TypeTag, Properties::SubTypeTag>::template GridView<i>;
     template <std::size_t i>
     using Element = typename GridView<i>::template Codim<0>::Entity;
-    typedef std::tuple<std::vector<Element<0>>, std::vector<Element<1>>>
-        ElementMap;
-    typedef typename MortarView::template Codim<0>::Entity MortarElement;
+    using ElementMap = std::tuple<std::vector<Element<0>>, std::vector<Element<1>>>;
+    using MortarElement = typename MortarView::template Codim<0>::Entity;
+
     enum {
         dimWorld = MortarView::dimensionworld
     };
+
 
 public:
     /*!
