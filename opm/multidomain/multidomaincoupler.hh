@@ -232,7 +232,6 @@ class DarcyCoupler {
             flux_[phaseIdx] = 0.0;
             Evaluation p0;  // Pressure in model 0
             Evaluation p1;  // Pressure in model 1
-
             // Only carry along the derivative from the model we focus on
             if (focusDofIdx == 0) {
                 p0 = elemCtx.template intensiveQuantities<0>(0, /*timeIdx=*/0)
@@ -339,8 +338,8 @@ class DarcyCoupler {
             const auto K1mat = elemCtx.template intensiveQuantities<1>(0, /*timeIdx=*/0)
                                    .intrinsicPermeability();
             for (unsigned dimIdx = 0; dimIdx < faceNormal.size(); dimIdx++) {
-                K0 += std::abs(K0mat[dimIdx] * faceNormal);
-                K1 += std::abs(K1mat[dimIdx] * faceNormal);
+                K0 += Opm::abs(K0mat[dimIdx] * faceNormal);
+                K1 += Opm::abs(K1mat[dimIdx] * faceNormal);
             }
 
             // determine the upstream and downstream DOFs
@@ -581,18 +580,16 @@ class DarcyCoupler {
         const auto& gridViewR = simulator1_.gridView();
         const auto simulators = std::forward_as_tuple(simulator0_, simulator1_);
         CouplingElementContext elemCtx(mortarView(), simulators, *map_);
-
         for (const auto& e : elements(mortarView())) {
             elemCtx.updateAll(e);
+
             // compute the local residual and its Jacobian
             unsigned numPrimaryDof = elemCtx.numPrimaryDof(/*timeIdx=*/0);
             for (unsigned focusDofIdx = 0; focusDofIdx < numPrimaryDof; ++focusDofIdx) {
                 elemCtx.setFocusDofIndex(focusDofIdx);
                 elemCtx.updateAllExtensiveQuantities();
-
                 // calculate the local residual
                 asImp_().volumeFlux(elemCtx);
-
                 // Global here refers to global within each domain
                 unsigned globI =
                     elemCtx.template globalSpaceIndex<0>(/*spaceIdx=*/0, /*timeIdx=*/0);

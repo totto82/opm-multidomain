@@ -81,6 +81,7 @@ class MultiDomainBaseModel
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
     using SubTypes = GetPropType<TypeTag, Properties::SubTypeTag>;
     using CouplerTypes = GetPropType<TypeTag, Properties::CouplerTypeTag>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     template <std::size_t i>
     using SubSimulator = typename SubTypes::template Simulator<i>;
@@ -188,6 +189,19 @@ public:
     }
 
     /*!
+     * \brief Called by the simulator after each time integration.
+     *
+     * This method is intended to do some post processing of the
+     * solution. (e.g., some additional output)
+     */
+    void endTimeStep()
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(numDomains), [&](const auto domainI) {
+            simulator_->template subSimulator<domainI>().problem().endTimeStep();
+        });
+    }
+    /*!
      * \brief Called by the problem if a time integration was
      *        successful, post processing of the solution is done and
      *        the result has been written to disk.
@@ -266,6 +280,21 @@ public:
                 }
             }
         });
+    }
+
+    /*!
+     * \brief Assign the subdomain solutions from a global solution vector.
+     */
+    Scalar nextTimeStepSize()
+    {
+        Scalar dt = 1e30;
+        using namespace Dune::Hybrid;
+        forEach(integralRange(numDomains), [&](const auto domainI) {
+            auto& subSim = simulator_->template subSimulator<domainI>();
+            auto subDt = std::min(subSim.maxTimeStepSize(), subSim.problem().nextTimeStepSize());
+            dt = std::min(subDt, dt);
+        });
+        return dt;
     }
 
     /*!

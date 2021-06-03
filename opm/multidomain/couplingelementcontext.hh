@@ -255,6 +255,16 @@ public:
     void setFocusDofIndex(unsigned dofIdx)
     {
         focusDofIdx_ = dofIdx;
+        if (focusDofIdx_==0) {
+            std::get<0>(subElemContext_).setFocusDofIndex(0);
+            std::get<1>(subElemContext_).setFocusDofIndex(-1);
+        }
+        else if (focusDofIdx_==1){
+            std::get<0>(subElemContext_).setFocusDofIndex(-1);
+            std::get<1>(subElemContext_).setFocusDofIndex(0);
+        }
+        else
+            throw std::logic_error("NotImplemented: CouplingElementContext only implemented for 2 dofs");
     }
     
     /*!

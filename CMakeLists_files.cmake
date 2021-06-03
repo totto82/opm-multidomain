@@ -67,10 +67,12 @@ list (APPEND PUBLIC_HEADER_FILES
 	opm/multidomain/dualporositycopuler.hh
 	opm/multidomain/ecfvcouplingstencil.hh
 	opm/multidomain/matrixconverter.hh
+	opm/multidomain/multidimproperties.hh
 	opm/multidomain/multidomaincoupler.hh
 	opm/multidomain/multidomainlinearizer.hh
 	opm/multidomain/multidomainmapper.hh
 	opm/multidomain/multidomainmodel.hh
 	opm/multidomain/multidomainproperties.hh
 	opm/multidomain/multidomainsimulator.hh
+	opm/multidomain/utils/multidomainstart.hh
 )

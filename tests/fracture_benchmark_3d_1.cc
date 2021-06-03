@@ -27,8 +27,8 @@
  */
 #include "config.h"
 #include "problems/benchmark3dproblem1.hh"
-
 #include <opm/models/immiscible/immisciblemodel.hh>
+
 #include <opm/multidomain/utils/multidomainstart.hh>
 
 
@@ -92,6 +92,6 @@ struct CouplerTypeTag<TypeTag, TTag::MultiDimModel>
 
 int main(int argc, char **argv)
 {
-    typedef TTAG(MultiDimModel) MixedDimModelTypeTag;
-    Opm::multidomainStart<MixedDimModelTypeTag>(argc, argv);
+    using FractureBenchmarkTypeTag = Opm::Properties::TTag::MultiDimModel;
+    Opm::multidomainStart<FractureBenchmarkTypeTag>(argc, argv);
 }

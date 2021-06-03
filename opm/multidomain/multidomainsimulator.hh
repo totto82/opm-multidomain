@@ -124,7 +124,19 @@ public:
             std::get<domainI>(simulators_)->setTimeStepIndex(value);
         });
     }
-
+    /*!
+     * \brief Set the time of simulated seconds at which the simulation runs.
+     *
+     * \param t The time \f$\mathrm{[s]}\f$ at which the simulation is finished
+     */
+    template <class Scalar>
+    void setEndTime(Scalar t)
+    {   using namespace Dune::Hybrid;
+        forEach(integralRange(numDomains), [&](const auto domainI) {
+            std::get<domainI>(simulators_)->setEndTime(t);
+        });
+    }
+    
     /*!
      * \brief Set the current simulated time, don't change the current
      *        time step index.
