@@ -34,14 +34,16 @@
 #include <opm/material/components/Unit.hpp>
 #include <opm/material/fluidstates/ImmiscibleFluidState.hpp>
 #include <opm/material/fluidsystems/LiquidPhase.hpp>
-#include <opm/material/common/Unused.hpp>
+//#include <opm/material/common/Unused.hpp>
 #include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/utils/basicproperties.hh>
 #include <opm/simulators/linalg/parallelistlbackend.hh>
+#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include <dune/common/version.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+
 
 #include <sstream>
 #include <string>
@@ -251,9 +253,9 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::temperature
      */
     template <class Context>
-    Scalar temperature(const Context &context OPM_UNUSED,
-                       unsigned spaceIdx OPM_UNUSED,
-                       unsigned timeIdx OPM_UNUSED) const
+    Scalar temperature(const Context &context ,
+                       unsigned spaceIdx ,
+                       unsigned timeIdx ) const
     {
         return 273.15 + 10;
     } // 10C
@@ -262,16 +264,16 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::porosity
      */
     template <class Context>
-    Scalar porosity(const Context &context OPM_UNUSED,
-                    unsigned spaceIdx OPM_UNUSED,
-                    unsigned timeIdx OPM_UNUSED) const
+    Scalar porosity(const Context &context ,
+                    unsigned spaceIdx ,
+                    unsigned timeIdx ) const
     {
         return 0.4;
     }
     template <class Context>
-    Scalar extrusionFactor(const Context &context OPM_UNUSED,
-                           unsigned spaceIdx OPM_UNUSED,
-                           unsigned timeIdx OPM_UNUSED) const
+    Scalar extrusionFactor(const Context &context ,
+                           unsigned spaceIdx ,
+                           unsigned timeIdx ) const
     {
         return extrusionFactor();
     }
@@ -348,9 +350,9 @@ public:
      */
     template <class PrimaryVariables, class Context>
     void initial(PrimaryVariables &values,
-                 const Context &context OPM_UNUSED,
-                 unsigned spaceIdx OPM_UNUSED,
-                 unsigned timeIdx OPM_UNUSED) const
+                 const Context &context ,
+                 unsigned spaceIdx ,
+                 unsigned timeIdx ) const
     {
         const GlobalPosition &pos = context.pos(spaceIdx, timeIdx);
         values[pressure0Idx] = (1 - pos[0]);
@@ -361,9 +363,9 @@ public:
      */
     template <class Context>
     void source(RateVector &rate,
-                const Context &context OPM_UNUSED,
-                unsigned spaceIdx OPM_UNUSED,
-                unsigned timeIdx OPM_UNUSED) const
+                const Context &context ,
+                unsigned spaceIdx ,
+                unsigned timeIdx ) const
     {
         rate = Scalar(0.0);
     }

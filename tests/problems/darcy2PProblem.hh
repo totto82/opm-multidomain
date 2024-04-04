@@ -40,6 +40,7 @@
 #include <opm/models/immiscible/immiscibleproperties.hh>
 #include <opm/models/io/unstructuredgridvanguard.hh>
 
+#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 namespace Opm {
 template <class TypeTag>
 class Darcy2pProblem;
@@ -305,8 +306,8 @@ class Darcy2pProblem : public GetPropType<TypeTag, Properties::BaseProblem> {
      * \copydoc FvBaseMultiPhaseProblem::porosity
      */
     template <class Context>
-    Scalar porosity(const Context &context OPM_UNUSED, unsigned spaceIdx OPM_UNUSED,
-                    unsigned timeIdx OPM_UNUSED) const {
+    Scalar porosity(const Context &context , unsigned spaceIdx ,
+                    unsigned timeIdx ) const {
         return 1.0;
     }
 
@@ -323,8 +324,8 @@ class Darcy2pProblem : public GetPropType<TypeTag, Properties::BaseProblem> {
      * \copydoc FvBaseMultiPhaseProblem::temperature
      */
     template <class Context>
-    Scalar temperature(const Context &context OPM_UNUSED, unsigned spaceIdx OPM_UNUSED,
-                       unsigned timeIdx OPM_UNUSED) const {
+    Scalar temperature(const Context &context , unsigned spaceIdx ,
+                       unsigned timeIdx ) const {
         return temperature_;
     }
 
@@ -494,16 +495,16 @@ class Darcy2pProblem : public GetPropType<TypeTag, Properties::BaseProblem> {
      * everywhere.
      */
     template <class Context>
-    void source(RateVector &rate, const Context &context OPM_UNUSED,
-                unsigned spaceIdx OPM_UNUSED, unsigned timeIdx OPM_UNUSED) const {
+    void source(RateVector &rate, const Context &context ,
+                unsigned spaceIdx , unsigned timeIdx ) const {
         rate = Scalar(0.0);
     }
 
     //! \}
     template <class Context>
-    Scalar extrusionFactor(const Context &context OPM_UNUSED,
-                           unsigned spaceIdx OPM_UNUSED,
-                           unsigned timeIdx OPM_UNUSED) const {
+    Scalar extrusionFactor(const Context &context ,
+                           unsigned spaceIdx ,
+                           unsigned timeIdx ) const {
         if (dim == dimWorld - 1)
             return 1e-4;  // fracture apperture
         else

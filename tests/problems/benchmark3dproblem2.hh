@@ -148,9 +148,9 @@ public:
     }
 
     template <class Context>
-    Scalar extrusionFactor(const Context &context OPM_UNUSED,
-                           unsigned spaceIdx OPM_UNUSED,
-                           unsigned timeIdx OPM_UNUSED) const
+    Scalar extrusionFactor(const Context &context ,
+                           unsigned spaceIdx ,
+                           unsigned timeIdx ) const
     {
         return extrusionFactor();
     }
@@ -164,9 +164,9 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::porosity
      */
     template <class Context>
-    Scalar porosity(const Context &context OPM_UNUSED,
-                    unsigned spaceIdx OPM_UNUSED,
-                    unsigned timeIdx OPM_UNUSED) const
+    Scalar porosity(const Context &context ,
+                    unsigned spaceIdx ,
+                    unsigned timeIdx ) const
     {
         const GlobalPosition &globalPos = context.pos(spaceIdx, timeIdx);
         double tol = 1e-3;

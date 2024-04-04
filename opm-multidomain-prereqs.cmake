@@ -31,7 +31,6 @@ set (opm-multidomain_DEPS
   "dune-grid REQUIRED"
   "dune-istl REQUIRED"
   "opm-common REQUIRED"
-  "opm-material REQUIRED"
   "opm-models REQUIRED"
   "dune-localfunctions"
   "dune-alugrid"

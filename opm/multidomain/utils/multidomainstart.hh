@@ -5,6 +5,7 @@
 
 #include <dune/istl/io.hh>
 #include <dune/istl/solvers.hh>
+#include <dune/istl/paamg/amg.hh>
 #include <opm/material/common/ResetLocale.hpp>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
 #include <opm/models/utils/basicproperties.hh>
@@ -32,7 +33,12 @@ int multidomainStart(int argc, char** argv) {
 
     using MatrixBlock = typename GetPropType<typename SubTypes::template TypeTag<0>,
                                              Properties::SparseMatrixAdapter>::
-        MatrixBlock::BaseType;  // typename Dune::FieldMatrix<double, 2, 2>;
+        MatrixBlock;  // typename Dune::FieldMatrix<double, 2, 2>;
+    
+    //using MatrixBlock = typename Dune::FieldMatrix<double, 2, 2>;
+    //using SparseMatrixAdapter = GetPropType<TypeTag, Properties::SparseMatrixAdapter>;
+    //using MatrixBlock = typename SparseMatrixAdapter::MatrixBlock;
+
     using BCRSMatrix = Dune::BCRSMatrix<MatrixBlock>;
     using VectorBlock = Dune::FieldVector<double, MatrixBlock::rows>;
     using SolutionVector = Dune::BlockVector<VectorBlock>;
@@ -151,7 +157,7 @@ int multidomainStart(int argc, char** argv) {
             currentSolution = nextSolution;
             try {
                 model.linearizer().linearize();
-            } catch (Opm::NumericalIssue) {
+            } catch (Opm::NumericalProblem) {
                 newtonIterationIdx = maxNewtonIt;
                 break;
             }
@@ -269,7 +275,7 @@ int multidomainStart(int argc, char** argv) {
 
                 try {
                     model.linearizer().linearize();
-                } catch (Opm::NumericalIssue) {
+                } catch (Opm::NumericalProblem) {
                     newtonIterationIdx = maxNewtonIt;
                     break;
                 }

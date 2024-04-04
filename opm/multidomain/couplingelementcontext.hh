@@ -35,7 +35,8 @@
 #include <opm/multidomain/ecfvcouplingstencil.hh>
 #include <opm/multidomain/multidomainproperties.hh>
 
-#include <opm/material/common/Exceptions.hpp>
+//#include <opm/material/common/Exceptions.hpp>
+#include <opm/common/Exceptions.hpp>
 
 #include <dune/common/fvector.hh>
 
@@ -281,7 +282,7 @@ public:
      * \param timeIdx The index of the solution vector used by the
      *                time discretization.
      */
-    const Stencil &stencil(unsigned timeIdx OPM_UNUSED) const
+    const Stencil &stencil(unsigned timeIdx ) const
     {
         return stencil_;
     }
@@ -326,7 +327,7 @@ public:
      *                time discretization.
      */
     template<std::size_t i>
-    const GlobalPosition& pos(unsigned dofIdx, unsigned timeIdx OPM_UNUSED) const
+    const GlobalPosition& pos(unsigned dofIdx, unsigned timeIdx ) const
     { return std::get<i>(subElemContext_)(dofIdx, timeIdx).globalPos(); }
 
     template<std::size_t i>
